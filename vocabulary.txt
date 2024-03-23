@@ -1,0 +1,2 @@
+apple=pomme,citron
+loan=emprunt,morgage,prout

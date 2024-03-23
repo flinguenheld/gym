@@ -1,3 +1,4 @@
+mod english;
 mod math;
 mod window;
 
@@ -13,6 +14,9 @@ struct Args {
     #[arg(short, long)]
     substraction: bool,
 
+    #[arg(short, long)]
+    english: bool,
+
     #[arg(long, default_value_t = 2)]
     min: u16,
     #[arg(long, default_value_t = 9)]
@@ -26,7 +30,9 @@ fn main() {
         math::run(math::Operation::Multiplication, args.min, args.max);
     } else if args.addition {
         math::run(math::Operation::Addition, args.min, args.max);
-    } else {
+    } else if args.substraction {
         math::run(math::Operation::Substraction, args.min, args.max);
+    } else {
+        english::run();
     }
 }

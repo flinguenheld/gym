@@ -4,7 +4,7 @@ use rand::Rng;
 use std::io;
 use std::io::Write;
 
-const X_TXT: u16 = 17;
+const X_TXT: u16 = 18;
 const Y_TXT: u16 = 6;
 
 #[derive(PartialEq)]
