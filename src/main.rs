@@ -5,7 +5,7 @@ mod window;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
-#[command(version, about, long_about=None)]
+#[command(version, about, long_about=None,after_help = "  -> Ctrl+c to quit")]
 struct Args {
     #[arg(short, long)]
     multiplication: bool,
@@ -14,7 +14,7 @@ struct Args {
     #[arg(short, long)]
     substraction: bool,
 
-    #[arg(short, long)]
+    #[arg(short, long, help = "Press Tab for help, requires 'vocabulary.txt'")]
     english: bool,
 
     #[arg(long, default_value_t = 2)]

@@ -35,15 +35,15 @@ pub fn run(operation_type: Operation, min: u16, mut max: u16) {
 
         if operation_type == Operation::Multiplication {
             result = (a * b).to_string();
-            window::print_window("Multiplication", success, fails, warning);
+            window::print_window("Multiplication", success, fails, warning, 3);
             print!("{} {} * {} = ", termion::cursor::Goto(X_TXT, Y_TXT), a, b);
         } else if operation_type == Operation::Addition {
             result = (a + b).to_string();
-            window::print_window("Addition", success, fails, warning);
+            window::print_window("Addition", success, fails, warning, 3);
             print!("{} {} + {} = ", termion::cursor::Goto(X_TXT, Y_TXT), a, b);
         } else if operation_type == Operation::Substraction {
             result = (a - b).to_string();
-            window::print_window("Substraction", success, fails, warning);
+            window::print_window("Substraction", success, fails, warning, 3);
             print!("{} {} - {} = ", termion::cursor::Goto(X_TXT, Y_TXT), a, b);
         }
 

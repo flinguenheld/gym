@@ -1,2 +1,12 @@
-apple=pomme,citron
-loan=emprunt,morgage,prout
+drop in=visit unexpectedly,visit,passer
+get on=be almost a particular time
+go off=be no longer fresh,rotten
+go round=visit sb's house,faire un saut
+leave out=not include,exclude
+put off=make sb not want to do,discourage
+run into=meet by chance
+run out of=not have any left
+take to=begin to like,begin to do regularly,s'adapter,start liking
+try out=experiment with,experience
+turn out=develop in a particular way
+turn up=appear unexpectedly
