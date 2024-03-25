@@ -6,25 +6,32 @@ This small game allows you to practice mental arithmetic in the terminal. 🧠
 
 ### Maths
 
+`gym --multiplication`  
+`gym --addition`  
+`gym --substraction`  
+
 <div align="center">
   <img src="./images/multiplication.gif">
 </div>
 
-`gym --multiplication`  
-`gym --addition`  
-`gym --substraction`  
+
+💡 Press *CTL+C* or *ESC* to quit.
  
 
 ### Vocabulary
 Unbelievable! You can also practice you vocabulary in your terminal 🤯  
 
+`gym --vocabulary`  
+
 <div align="center">
   <img src="./images/vocabulary.gif">
 </div>
 
-`gym --vocabulary`  
 
-This part requires a file named **vocabulary.txt** beside the gym's binary with this structure :
+💡 Press *TAB* to display obfuscated help.
+
+This part requires a file named **vocabulary.txt** beside the gym's binary.  
+Feel free to add all your words with this structure :
 ```
 word=first_synonym,second_synonym,...
 word=first_synonym,second_synonym,...
