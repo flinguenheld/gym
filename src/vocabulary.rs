@@ -1,8 +1,7 @@
 use crate::window;
 use rand::Rng;
-use std::env;
-use std::fs;
 use std::io::{stdin, stdout, Stdout, Write};
+use std::{env, fs};
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::{IntoRawMode, RawTerminal};
@@ -17,9 +16,10 @@ struct Word {
 }
 
 pub fn run() {
-    // Read file and create the word list
-    if let Ok(path) = env::current_dir() {
-        println!("{}", path.display());
+    // Read file and create the word list --
+    if let Ok(mut path) = env::current_exe() {
+        path.pop();
+
         if let Ok(file_content) = fs::read_to_string(format!("{}/vocabulary.txt", path.display())) {
             let mut words: Vec<Word> = Vec::new();
             file_content.split('\n').for_each(|line| {
@@ -33,7 +33,7 @@ pub fn run() {
                 })
             });
 
-            // Raw mode mandatory to read key events --
+            // Raw mode is mandatory to read key events --
             let stdin = stdin();
             let mut stdout = stdout().into_raw_mode().unwrap();
 
@@ -73,7 +73,7 @@ pub fn run() {
                                 .map(|c| {
                                     if c != ' '
                                         && c != '-'
-                                        && rand::thread_rng().gen_bool(1.0 / 2.0)
+                                        && rand::thread_rng().gen_bool(1.0 / 1.6)
                                     {
                                         '*'
                                     } else {
@@ -81,10 +81,7 @@ pub fn run() {
                                     }
                                 })
                                 .collect();
-
-                            user_input.clear();
                         }
-
                         Key::Char('\n') => {
                             if current_word
                                 .synonyms
@@ -101,15 +98,12 @@ pub fn run() {
                             user_input.clear();
                             help.clear();
                         }
-
                         Key::Backspace => {
                             user_input.pop();
                         }
-
                         Key::Char(c) => {
                             user_input.push(c);
                         }
-
                         _ => {}
                     }
 
@@ -154,17 +148,17 @@ fn get_random_word(words: &[Word]) -> Option<&Word> {
 fn update_screen(
     warning: bool,
     current_word: &Word,
-    current_txt: &String,
+    current_txt: &str,
     success: u16,
     fails: u16,
     help: &String,
     stdout: &mut RawTerminal<Stdout>,
 ) {
     if !help.is_empty() {
-        window::print_window("English", success, fails, warning, 5);
+        window::print_window("Vocabulary", success, fails, warning, 5);
         print!("{}💡{}", termion::cursor::Goto(X_TXT - 5, Y_TXT + 2), &help);
     } else {
-        window::print_window("English", success, fails, warning, 3);
+        window::print_window("Vocabulary", success, fails, warning, 3);
     }
 
     print!(
