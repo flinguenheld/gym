@@ -18,9 +18,9 @@ struct Args {
     english: bool,
 
     #[arg(long, default_value_t = 2)]
-    min: u16,
+    min: i16,
     #[arg(long, default_value_t = 9)]
-    max: u16,
+    max: i16,
 }
 
 fn main() {

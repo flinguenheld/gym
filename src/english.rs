@@ -59,7 +59,10 @@ pub fn run() {
 
                 for c in stdin.keys() {
                     match c.unwrap() {
-                        Key::Esc | Key::Ctrl('c') => break,
+                        Key::Esc | Key::Ctrl('c') => {
+                            print!("{}", termion::clear::All);
+                            break;
+                        }
 
                         // Tab to display help (all synonyms with stars).
                         Key::Char('\t') => {
