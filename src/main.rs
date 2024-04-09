@@ -1,3 +1,4 @@
+mod keyboard;
 mod math;
 mod vocabulary;
 mod window;
@@ -17,6 +18,14 @@ struct Args {
     #[arg(short, long, help = "Press Tab for help, requires 'vocabulary.txt'")]
     vocabulary: bool,
 
+    #[arg(
+        short,
+        long,
+        required = false,
+        help = "Options: (L)etters (C)aps (N)umbers (S)ymbols"
+    )]
+    keyboard: Option<String>,
+
     #[arg(long, default_value_t = 2)]
     min: i16,
     #[arg(long, default_value_t = 9)]
@@ -26,7 +35,9 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    if args.vocabulary {
+    if let Some(a) = args.keyboard {
+        keyboard::run(&a.to_uppercase(), args.min as u16, args.max as u16);
+    } else if args.vocabulary {
         vocabulary::run();
     } else if args.addition {
         math::run(math::Operation::Addition, args.min, args.max);
