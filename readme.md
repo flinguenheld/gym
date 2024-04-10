@@ -16,7 +16,17 @@ This small game allows you to practice mental arithmetic in the terminal. 🧠
 
 
 💡 Press *CTL+C* or *ESC* to quit.
- 
+
+
+### Keyboard
+Don't tell me you've changed your layout again 😮‍💨 !  
+
+`gym --keyboard <KEYBOARD>  Options: (L)etters (C)aps (N)umbers (S)ymbols (0-9...)nb characters`
+
+<div align="center">
+  <img src="./images/keyboard.gif">
+</div>
+
 
 ### Vocabulary
 Unbelievable! You can also practice you vocabulary in your terminal 🤯  
