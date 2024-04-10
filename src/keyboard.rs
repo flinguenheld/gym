@@ -9,31 +9,33 @@ use termion::raw::{IntoRawMode, RawTerminal};
 const X_TXT: u16 = 18;
 const Y_TXT: u16 = 6;
 
-pub fn run(options: &String, mut min: u16, mut max: u16) {
-    if min < 1 {
-        min = 1;
-    };
-    if min >= max {
-        max = min + 1;
+pub fn run(options: &str) {
+    // Init --
+    let mut nb: u32 = options
+        .chars()
+        .filter(|c| c.is_ascii_digit())
+        .fold(0, |acc, d| acc * 10 + d.to_digit(10).unwrap_or(0));
+
+    if nb == 0 {
+        nb = 3;
     }
 
-    // Init --
-    let mut list = String::from("");
+    let mut char_list = String::from("");
 
     if options.contains('L') {
-        list.push_str("abcdefghijklmnopqrstuvwxyz");
+        char_list.push_str("abcdefghijklmnopqrstuvwxyz");
     }
     if options.contains('C') {
-        list.push_str("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        char_list.push_str("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
     }
     if options.contains('N') {
-        list.push_str("0123456789");
+        char_list.push_str("0123456789");
     }
     if options.contains('S') {
-        list.push_str("$^[]&|~!?{}\"\\.,()*_-:;<>/'`@%#+=");
+        char_list.push_str("$^[]&|~!?{}\"\\.,()*_-:;<>/'`@%#+=");
     }
 
-    if list.is_empty() {
+    if char_list.is_empty() {
         println!("\x1b[91mError: \x1b[0m Wrong options, try gym -h");
         return;
     }
@@ -41,7 +43,7 @@ pub fn run(options: &String, mut min: u16, mut max: u16) {
     let mut success: u16 = 0;
     let mut fails: u16 = 0;
     let mut warning = false;
-    let mut current_value = new_value(&list, min, max);
+    let mut current_value = new_value(&char_list, nb);
     let mut user_input = String::from("");
 
     // Raw mode mandatory to read key events --
@@ -68,7 +70,7 @@ pub fn run(options: &String, mut min: u16, mut max: u16) {
                 if current_value == user_input {
                     success += 1;
                     warning = false;
-                    current_value = new_value(&list, min, max);
+                    current_value = new_value(&char_list, nb);
                 } else {
                     fails += 1;
                     warning = true;
@@ -97,13 +99,13 @@ pub fn run(options: &String, mut min: u16, mut max: u16) {
 }
 
 // --
-fn new_value(list: &str, min: u16, max: u16) -> String {
+fn new_value(char_list: &str, nb_chars: u32) -> String {
     let mut val = String::from("");
 
-    for _ in 0..rand::thread_rng().gen_range(min, max + 1) {
-        if let Some(c) = list
+    for _ in 0..nb_chars {
+        if let Some(c) = char_list
             .chars()
-            .nth(rand::thread_rng().gen_range(0, list.len()))
+            .nth(rand::thread_rng().gen_range(0, char_list.len()))
         {
             val.push(c);
         }
@@ -116,8 +118,8 @@ fn update_screen(
     success: u16,
     fails: u16,
     warning: bool,
-    current_value: &String,
-    user_input: &String,
+    current_value: &str,
+    user_input: &str,
     stdout: &mut RawTerminal<Stdout>,
 ) {
     window::print_window("Keyboard", success, fails, warning, 3);

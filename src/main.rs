@@ -22,13 +22,21 @@ struct Args {
         short,
         long,
         required = false,
-        help = "Options: (L)etters (C)aps (N)umbers (S)ymbols"
+        help = "Options: (L)etters (C)aps (N)umbers (S)ymbols (0-9...)nb characters"
     )]
     keyboard: Option<String>,
 
-    #[arg(long, default_value_t = 2)]
+    #[arg(
+        long,
+        default_value_t = 2,
+        help = "min value for maths (can be negative)"
+    )]
     min: i16,
-    #[arg(long, default_value_t = 9)]
+    #[arg(
+        long,
+        default_value_t = 9,
+        help = "max value for maths (can be negative)"
+    )]
     max: i16,
 }
 
@@ -36,7 +44,7 @@ fn main() {
     let args = Args::parse();
 
     if let Some(a) = args.keyboard {
-        keyboard::run(&a.to_uppercase(), args.min as u16, args.max as u16);
+        keyboard::run(&a.to_uppercase());
     } else if args.vocabulary {
         vocabulary::run();
     } else if args.addition {
