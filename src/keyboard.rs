@@ -105,7 +105,7 @@ fn new_value(char_list: &str, nb_chars: u32) -> String {
     for _ in 0..nb_chars {
         if let Some(c) = char_list
             .chars()
-            .nth(rand::thread_rng().gen_range(0, char_list.len()))
+            .nth(rand::thread_rng().gen_range(0..char_list.len()))
         {
             val.push(c);
         }

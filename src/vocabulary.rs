@@ -142,7 +142,7 @@ pub fn run() {
 
 // --
 fn get_random_word(words: &[Word]) -> Option<&Word> {
-    words.get(rand::thread_rng().gen_range(0, words.len()))
+    words.get(rand::thread_rng().gen_range(0..words.len()))
 }
 
 fn update_screen(
