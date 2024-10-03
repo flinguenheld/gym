@@ -6,9 +6,6 @@ use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::{IntoRawMode, RawTerminal};
 
-const X_TXT: u16 = 15;
-const Y_TXT: u16 = 6;
-
 #[derive(Debug)]
 struct Word {
     value: String,
@@ -154,19 +151,12 @@ fn update_screen(
     help: &String,
     stdout: &mut RawTerminal<Stdout>,
 ) {
-    if !help.is_empty() {
-        window::print_window("Vocabulary", success, fails, warning, 5);
-        print!("{}💡{}", termion::cursor::Goto(X_TXT - 5, Y_TXT + 2), &help);
+    let txt = if !help.is_empty() {
+        format!("    💡{}\n\n{} = {}", help, current_word.value, current_txt)
     } else {
-        window::print_window("Vocabulary", success, fails, warning, 3);
-    }
+        format!("{} = {}", current_word.value, current_txt)
+    };
 
-    print!(
-        "{}{} = {}",
-        termion::cursor::Goto(X_TXT, Y_TXT),
-        &current_word.value,
-        &current_txt
-    );
-
+    window::print_window(txt, "Vocabulary", success, fails, warning);
     stdout.flush().unwrap();
 }

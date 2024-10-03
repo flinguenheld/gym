@@ -6,9 +6,6 @@ use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::{IntoRawMode, RawTerminal};
 
-const X_TXT: u16 = 18;
-const Y_TXT: u16 = 6;
-
 pub fn run(options: &str) {
     // Init --
     let mut nb: u32 = options
@@ -84,6 +81,9 @@ pub fn run(options: &str) {
             Key::Backspace => {
                 user_input.pop();
             }
+            Key::Ctrl('u') => {
+                user_input.clear();
+            }
             _ => {}
         }
 
@@ -122,13 +122,12 @@ fn update_screen(
     user_input: &str,
     stdout: &mut RawTerminal<Stdout>,
 ) {
-    window::print_window("Keyboard", success, fails, warning, 3);
-
-    print!(
-        "{} {} -> {}",
-        termion::cursor::Goto(X_TXT, Y_TXT),
-        current_value,
-        user_input
+    window::print_window(
+        window::format(format!("{} -> {}", current_value, user_input), 45, false),
+        "Keyboard",
+        success,
+        fails,
+        warning,
     );
 
     stdout.flush().unwrap();

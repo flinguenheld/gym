@@ -4,19 +4,7 @@ use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::{IntoRawMode, RawTerminal};
 
-const X_TXT: u16 = 18;
-const Y_TXT: u16 = 6;
-
 pub fn run(options: String, min: i32, max: i32) {
-    let mut nb_terms = options
-        .chars()
-        .filter(|c| c.is_ascii_digit())
-        .fold(0_u32, |acc, d| acc * 10 + d.to_digit(10).unwrap_or(0));
-
-    if nb_terms == 0 {
-        nb_terms = 2;
-    }
-
     // Init --
     let mut success: u16 = 0;
     let mut fails: u16 = 0;
@@ -27,7 +15,10 @@ pub fn run(options: String, min: i32, max: i32) {
             .chars()
             .filter(|c| c.is_ascii_alphabetic())
             .collect(),
-        nb_terms,
+        options
+            .chars()
+            .filter(|c| c.is_ascii_digit())
+            .fold(0_u32, |acc, d| acc * 10 + d.to_digit(10).unwrap_or(0)),
         min,
         max,
     );
@@ -43,7 +34,7 @@ pub fn run(options: String, min: i32, max: i32) {
         success,
         fails,
         warning,
-        &user_input,
+        user_input.as_str(),
         &mut stdout,
     );
 
@@ -85,7 +76,7 @@ pub fn run(options: String, min: i32, max: i32) {
             success,
             fails,
             warning,
-            &user_input,
+            user_input.as_str(),
             &mut stdout,
         );
     }
@@ -96,16 +87,17 @@ fn update_screen(
     success: u16,
     fails: u16,
     warning: bool,
-    user_input: &String,
+    user_input: &str,
     stdout: &mut RawTerminal<Stdout>,
 ) {
-    window::print_window("Maths", success, fails, warning, 3);
-    print!(
-        "{} {} = {}",
-        termion::cursor::Goto(X_TXT, Y_TXT),
-        operation.to_string,
-        user_input
+    window::print_window(
+        window::format(operation.to_string.clone(), 20, true),
+        "Maths",
+        success,
+        fails,
+        warning,
     );
+    print!(" = {}", user_input);
 
     stdout.flush().unwrap();
 }

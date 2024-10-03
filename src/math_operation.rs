@@ -9,7 +9,7 @@ pub struct Operation {
     pub to_string: String,
     pub result: String,
 
-    operation_type: Vec<i32>,
+    operators: Vec<i32>,
     min: i32,
     max: i32,
     nb_terms: u32,
@@ -38,7 +38,7 @@ impl Operation {
         Self {
             to_string: "0 + 0".to_string(),
             result: "0".to_string(),
-            operation_type: operators,
+            operators,
             min,
             max,
             nb_terms,
@@ -56,13 +56,14 @@ impl Operation {
                 rand::thread_rng().gen_range(self.min..=self.max)
             } else {
                 *self
-                    .operation_type
-                    .get(rand::thread_rng().gen_range(0..self.operation_type.len()))
+                    .operators
+                    .get(rand::thread_rng().gen_range(0..self.operators.len()))
                     .unwrap_or(&ADD)
             });
         }
         self.to_string = to_string(&operations);
 
+        // FIX: Add a try to prevent overflow
         // Resolve
         while let Some(position) = operations.iter().position(|v| *v == MUL) {
             let b = operations.remove(position + 1).unwrap();
