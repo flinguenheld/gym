@@ -1,30 +1,22 @@
 use rand::Rng;
 use std::collections::VecDeque;
 
-const ADD: i16 = i16::MAX;
-const SUB: i16 = i16::MAX - 1;
-const MUL: i16 = i16::MAX - 2;
+pub const ADD: i32 = i32::MAX;
+pub const SUB: i32 = i32::MAX - 1;
+pub const MUL: i32 = i32::MAX - 2;
 
-#[derive(Clone, Copy)]
-pub enum OperationType {
-    Addition,
-    Subtraction,
-    Multiplication,
-    All,
-}
-
-pub struct OperationNEWGEN {
+pub struct Operation {
     pub to_string: String,
     pub result: String,
 
-    operation_type: OperationType,
-    min: i16,
-    max: i16,
-    nb_terms: u16,
+    operation_type: Vec<i32>,
+    min: i32,
+    max: i32,
+    nb_terms: u32,
 }
 
-impl OperationNEWGEN {
-    pub fn new(operation_type: OperationType, mut nb_terms: u16, min: i16, mut max: i16) -> Self {
+impl Operation {
+    pub fn new(options: String, mut nb_terms: u32, min: i32, mut max: i32) -> Self {
         if min > max {
             max = min + 5;
         }
@@ -32,17 +24,29 @@ impl OperationNEWGEN {
             nb_terms = 2;
         }
 
+        let mut operators = Vec::new(); // In a vec to allow random choice
+        if options.contains("A") {
+            operators.push(ADD);
+        }
+        if options.contains("S") {
+            operators.push(SUB);
+        }
+        if options.contains("M") || operators.is_empty() {
+            operators.push(MUL);
+        }
+
         Self {
             to_string: "0 + 0".to_string(),
             result: "0".to_string(),
-            operation_type,
+            operation_type: operators,
             min,
             max,
             nb_terms,
         }
     }
 
-    pub fn generate(&self) -> Self {
+    /// Update the instance with a new operation
+    pub fn generate(&mut self) {
         let nb_numbers = rand::thread_rng().gen_range(2..self.nb_terms + 1);
 
         // Create --
@@ -51,15 +55,13 @@ impl OperationNEWGEN {
             operations.push_back(if i % 2 == 0 {
                 rand::thread_rng().gen_range(self.min..=self.max)
             } else {
-                match self.operation_type {
-                    OperationType::Addition => ADD,
-                    OperationType::Subtraction => SUB,
-                    OperationType::Multiplication => MUL,
-                    OperationType::All => rand::thread_rng().gen_range(MUL..=ADD),
-                }
+                *self
+                    .operation_type
+                    .get(rand::thread_rng().gen_range(0..self.operation_type.len()))
+                    .unwrap_or(&ADD)
             });
         }
-        let value_str = to_string(&operations);
+        self.to_string = to_string(&operations);
 
         // Resolve
         while let Some(position) = operations.iter().position(|v| *v == MUL) {
@@ -80,17 +82,11 @@ impl OperationNEWGEN {
             });
         }
 
-        let value_digit = *operations.front().unwrap();
-
-        OperationNEWGEN {
-            to_string: value_str,
-            result: value_digit.to_string(),
-            ..*self
-        }
+        self.result = (*operations.front().unwrap()).to_string();
     }
 }
 
-fn to_string(numbers: &VecDeque<i16>) -> String {
+fn to_string(numbers: &VecDeque<i32>) -> String {
     numbers
         .iter()
         .enumerate()
