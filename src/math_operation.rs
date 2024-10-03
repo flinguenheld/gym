@@ -5,6 +5,12 @@ pub const ADD: i32 = i32::MAX;
 pub const SUB: i32 = i32::MAX - 1;
 pub const MUL: i32 = i32::MAX - 2;
 
+#[derive(Debug, PartialEq, Eq)]
+enum Field {
+    Term(i32),
+    Operator(char),
+}
+
 pub struct Operation {
     pub to_string: String,
     pub result: String,
@@ -47,43 +53,49 @@ impl Operation {
 
     /// Update the instance with a new operation
     pub fn generate(&mut self) {
-        let nb_numbers = rand::thread_rng().gen_range(2..self.nb_terms + 1);
+        self.to_string = "5 + 10 -2 *-6".to_string();
 
-        // Create --
-        let mut operations = VecDeque::new();
-        for i in 0..(nb_numbers * 2 - 1) {
-            operations.push_back(if i % 2 == 0 {
-                rand::thread_rng().gen_range(self.min..=self.max)
-            } else {
-                *self
-                    .operators
-                    .get(rand::thread_rng().gen_range(0..self.operators.len()))
-                    .unwrap_or(&ADD)
-            });
-        }
-        self.to_string = to_string(&operations);
-
-        // FIX: Add a try to prevent overflow
-        // Resolve
-        while let Some(position) = operations.iter().position(|v| *v == MUL) {
-            let b = operations.remove(position + 1).unwrap();
-            let a = operations.remove(position - 1).unwrap();
-
-            operations[position - 1] = a * b;
+        if let Some(operations) = convert(self.to_string.as_str()) {
+            self.result = resolve(operations).unwrap();
         }
 
-        while operations.len() > 1 {
-            let a = operations.pop_front().unwrap();
-            let op = operations.pop_front().unwrap();
-            let b = operations.pop_front().unwrap();
+        //     let nb_numbers = rand::thread_rng().gen_range(2..self.nb_terms + 1);
 
-            operations.push_front(match op {
-                ADD => a + b,
-                _ => a - b,
-            });
-        }
+        //     // Create --
+        //     let mut operations = VecDeque::new();
+        //     for i in 0..(nb_numbers * 2 - 1) {
+        //         operations.push_back(if i % 2 == 0 {
+        //             rand::thread_rng().gen_range(self.min..=self.max)
+        //         } else {
+        //             *self
+        //                 .operators
+        //                 .get(rand::thread_rng().gen_range(0..self.operators.len()))
+        //                 .unwrap_or(&ADD)
+        //         });
+        //     }
+        //     self.to_string = to_string(&operations);
 
-        self.result = (*operations.front().unwrap()).to_string();
+        //     // FIX: Add a try to prevent overflow
+        //     // Resolve
+        //     while let Some(position) = operations.iter().position(|v| *v == MUL) {
+        //         let b = operations.remove(position + 1).unwrap();
+        //         let a = operations.remove(position - 1).unwrap();
+
+        //         operations[position - 1] = a * b;
+        //     }
+
+        //     while operations.len() > 1 {
+        //         let a = operations.pop_front().unwrap();
+        //         let op = operations.pop_front().unwrap();
+        //         let b = operations.pop_front().unwrap();
+
+        //         operations.push_front(match op {
+        //             ADD => a + b,
+        //             _ => a - b,
+        //         });
+        //     }
+
+        //     self.result = (*operations.front().unwrap()).to_string();
     }
 }
 
@@ -104,4 +116,83 @@ fn to_string(numbers: &VecDeque<i32>) -> String {
             }
         })
         .collect()
+}
+
+fn convert(txt: &str) -> Option<VecDeque<Field>> {
+    let mut operations: VecDeque<Field> = VecDeque::new();
+
+    let txt: Vec<char> = txt
+        .chars()
+        .filter(|c| c.is_ascii_digit() || *c == '+' || *c == '-' || *c == '*')
+        .collect();
+
+    let mut current = String::new();
+    for (i, c) in txt.iter().enumerate() {
+        if (!c.is_ascii_digit() && !current.is_empty()) || i == txt.len() - 1 {
+            if i == txt.len() - 1 {
+                current.push(*c);
+            }
+            if let Ok(num) = current.parse::<i32>() {
+                operations.push_back(Field::Term(num));
+                current.clear();
+            } else {
+                return None;
+            }
+
+            if *c == '+' || *c == '*' || *c == '-' {
+                operations.push_back(Field::Operator(*c));
+            }
+        } else {
+            current.push(*c);
+        }
+    }
+
+    Some(operations)
+}
+
+fn resolve(mut operations: VecDeque<Field>) -> Option<String> {
+    // Resolve
+    while let Some(position) = operations.iter().position(|v| *v == Field::Operator('*')) {
+        let b = match operations.remove(position + 1).unwrap() {
+            Field::Term(v) => v,
+            _ => return None,
+        };
+        let a = match operations.remove(position - 1).unwrap() {
+            Field::Term(v) => v,
+            _ => return None,
+        };
+
+        operations[position - 1] = Field::Term(a * b);
+    }
+
+    println!("{:?}", operations);
+
+    while operations.len() > 1 {
+        let a = match operations.pop_front().unwrap() {
+            Field::Term(v) => v,
+            _ => return None,
+        };
+
+        let op = operations.pop_front().unwrap();
+
+        let b = match operations.pop_front().unwrap() {
+            Field::Term(v) => v,
+            _ => return None,
+        };
+
+        match op {
+            Field::Operator(o) => operations.push_front(Field::Term(match o {
+                '+' => a + b,
+                _ => a - b,
+            })),
+
+            _ => return None,
+        };
+        println!("{:?}", operations);
+    }
+
+    match operations.front().unwrap() {
+        Field::Term(v) => Some(v.to_string()),
+        _ => None,
+    }
 }
