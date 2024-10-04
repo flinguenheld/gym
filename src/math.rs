@@ -9,7 +9,7 @@ pub fn run(options: String, min: i32, max: i32) {
     // Init --
     let mut success: u16 = 0;
     let mut fails: u16 = 0;
-    let mut warning = false;
+    let mut icon = "";
 
     let mut operation = math_operation::Operation::new(
         options
@@ -34,7 +34,7 @@ pub fn run(options: String, min: i32, max: i32) {
         &operation,
         success,
         fails,
-        warning,
+        icon,
         user_input.as_str(),
         &mut stdout,
     );
@@ -47,24 +47,26 @@ pub fn run(options: String, min: i32, max: i32) {
                 break;
             }
             Key::Char('\n') => {
-                if user_input == operation.result {
-                    success += 1;
-                    warning = false;
-                    operation.generate();
-                } else if let Ok(user_operation_result) = convert_and_resolve(&user_input) {
-                    if user_operation_result == operation.result {
-                        operation.to_string = math_operation::clean_operation(&user_input);
-                        warning = false;
+                if !user_input.is_empty() {
+                    if user_input == operation.result {
+                        success += 1;
+                        icon = "";
+                        operation.generate();
+                    } else if let Ok(user_operation_result) = convert_and_resolve(&user_input) {
+                        if user_operation_result == operation.result {
+                            operation.to_string = math_operation::clean_operation(&user_input);
+                            icon = "🔄";
+                        } else {
+                            fails += 1;
+                            icon = "❌";
+                        }
                     } else {
                         fails += 1;
-                        warning = true;
+                        icon = "❌";
                     }
-                } else {
-                    fails += 1;
-                    warning = true;
-                }
 
-                user_input.clear();
+                    user_input.clear();
+                }
             }
             Key::Char(c) if c.is_ascii_digit() || c == '+' || c == '-' || c == '*' => {
                 user_input.push(c);
@@ -72,7 +74,7 @@ pub fn run(options: String, min: i32, max: i32) {
             Key::Backspace => {
                 user_input.pop();
             }
-            Key::Char('p') | Key::Char('P') => {
+            Key::Ctrl('p') | Key::Ctrl('P') => {
                 fails += 1;
                 operation.generate();
                 user_input.clear();
@@ -84,7 +86,7 @@ pub fn run(options: String, min: i32, max: i32) {
             &operation,
             success,
             fails,
-            warning,
+            icon,
             user_input.as_str(),
             &mut stdout,
         );
@@ -95,7 +97,7 @@ fn update_screen(
     operation: &math_operation::Operation,
     success: u16,
     fails: u16,
-    warning: bool,
+    warning: &str,
     user_input: &str,
     stdout: &mut RawTerminal<Stdout>,
 ) {

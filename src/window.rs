@@ -1,6 +1,6 @@
 /// Print and fill the frame
 /// Leave the cursor at the end of 'txt'
-pub fn print_window(txt: String, title: &str, success: u16, fails: u16, warning: bool) {
+pub fn print_window(txt: String, title: &str, success: u16, fails: u16, icon: &str) {
     print!("{}{}", termion::clear::All, termion::cursor::Goto(1, 2));
     println!("    ┌──────────────────────────────────────────────────┬─────────┬─────────┐\r");
     println!("    │                                                  │         │         │\r");
@@ -14,8 +14,8 @@ pub fn print_window(txt: String, title: &str, success: u16, fails: u16, warning:
     print!("{} ✅ {}", termion::cursor::Goto(58, 3), success);
     print!("{} ❌ {}", termion::cursor::Goto(68, 3), fails);
 
-    if warning {
-        print!("{}❌", termion::cursor::Goto(10, 6));
+    if !icon.is_empty() {
+        print!("{}{}", termion::cursor::Goto(10, 6), icon);
     }
 
     // Txt

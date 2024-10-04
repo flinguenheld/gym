@@ -39,7 +39,7 @@ pub fn run(options: &str) {
 
     let mut success: u16 = 0;
     let mut fails: u16 = 0;
-    let mut warning = false;
+    let mut warning = "";
     let mut current_value = new_value(&char_list, nb);
     let mut user_input = String::from("");
 
@@ -66,11 +66,11 @@ pub fn run(options: &str) {
             Key::Char('\n') => {
                 if current_value == user_input {
                     success += 1;
-                    warning = false;
+                    warning = "";
                     current_value = new_value(&char_list, nb);
                 } else {
                     fails += 1;
-                    warning = true;
+                    warning = "☒";
                 }
 
                 user_input.clear();
@@ -83,6 +83,11 @@ pub fn run(options: &str) {
             }
             Key::Ctrl('u') => {
                 user_input.clear();
+            }
+            Key::Ctrl('p') | Key::Ctrl('P') => {
+                fails += 1;
+                warning = "";
+                current_value = new_value(&char_list, nb);
             }
             _ => {}
         }
@@ -117,7 +122,7 @@ fn new_value(char_list: &str, nb_chars: u32) -> String {
 fn update_screen(
     success: u16,
     fails: u16,
-    warning: bool,
+    warning: &str,
     current_value: &str,
     user_input: &str,
     stdout: &mut RawTerminal<Stdout>,

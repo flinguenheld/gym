@@ -128,42 +128,46 @@ fn convert(txt: &str) -> Result<VecDeque<Field>> {
 }
 
 fn resolve(mut operations: VecDeque<Field>) -> Result<String> {
-    while let Some(position) = operations.iter().position(|v| *v == Field::Operator('*')) {
-        // Multiplication first --
-        let b = match operations.remove(position + 1).unwrap() {
-            Field::Term(v) => v,
-            _ => return Err(anyhow!("Incorrect operation, expected a term")),
-        };
-        let a = match operations.remove(position - 1).unwrap() {
-            Field::Term(v) => v,
-            _ => return Err(anyhow!("Incorrect operation, expected a term")),
-        };
-        operations[position - 1] = Field::Term(a * b);
-    }
+    if !operations.is_empty() {
+        while let Some(position) = operations.iter().position(|v| *v == Field::Operator('*')) {
+            // Multiplication first --
+            let b = match operations.remove(position + 1).unwrap() {
+                Field::Term(v) => v,
+                _ => return Err(anyhow!("Incorrect operation, expected a term")),
+            };
+            let a = match operations.remove(position - 1).unwrap() {
+                Field::Term(v) => v,
+                _ => return Err(anyhow!("Incorrect operation, expected a term")),
+            };
+            operations[position - 1] = Field::Term(a * b);
+        }
 
-    // Rest --
-    while operations.len() > 1 {
-        let a = match operations.pop_front().unwrap() {
-            Field::Term(v) => v,
-            _ => return Err(anyhow!("Incorrect operation, expected a term")),
-        };
-        let op = operations.pop_front().unwrap();
-        let b = match operations.pop_front().unwrap() {
-            Field::Term(v) => v,
-            _ => return Err(anyhow!("Incorrect operation, expected a term")),
-        };
+        // Rest --
+        while operations.len() > 1 {
+            let a = match operations.pop_front().unwrap() {
+                Field::Term(v) => v,
+                _ => return Err(anyhow!("Incorrect operation, expected a term")),
+            };
+            let op = operations.pop_front().unwrap();
+            let b = match operations.pop_front().unwrap() {
+                Field::Term(v) => v,
+                _ => return Err(anyhow!("Incorrect operation, expected a term")),
+            };
 
-        match op {
-            Field::Operator(o) => operations.push_front(Field::Term(match o {
-                '+' => a + b,
-                _ => a - b,
-            })),
-            _ => return Err(anyhow!("Incorrect operation, expected an operator")),
-        };
-    }
+            match op {
+                Field::Operator(o) => operations.push_front(Field::Term(match o {
+                    '+' => a + b,
+                    _ => a - b,
+                })),
+                _ => return Err(anyhow!("Incorrect operation, expected an operator")),
+            };
+        }
 
-    match operations.front().unwrap() {
-        Field::Term(v) => Ok(v.to_string()),
-        _ => return Err(anyhow!("Resolve failed")),
+        match operations.front().unwrap() {
+            Field::Term(v) => Ok(v.to_string()),
+            _ => Err(anyhow!("Resolve failed")),
+        }
+    } else {
+        Err(anyhow!("Resolve - Empty"))
     }
 }

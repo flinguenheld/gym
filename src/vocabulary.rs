@@ -37,7 +37,7 @@ pub fn run() {
             // --
             let mut success: u16 = 0;
             let mut fails: u16 = 0;
-            let mut warning = false;
+            let mut warning = "";
 
             let mut user_input = String::from("");
             let mut help = String::from("");
@@ -85,11 +85,11 @@ pub fn run() {
                                 .contains(&user_input.trim().to_string())
                             {
                                 success += 1;
-                                warning = false;
+                                warning = "";
                                 current_word = get_random_word(&words).unwrap();
                             } else {
                                 fails += 1;
-                                warning = true;
+                                warning = "☒";
                             }
 
                             user_input.clear();
@@ -100,6 +100,11 @@ pub fn run() {
                         }
                         Key::Char(c) => {
                             user_input.push(c);
+                        }
+                        Key::Ctrl('p') | Key::Ctrl('P') => {
+                            fails += 1;
+                            warning = "";
+                            current_word = get_random_word(&words).unwrap();
                         }
                         _ => {}
                     }
@@ -143,7 +148,7 @@ fn get_random_word(words: &[Word]) -> Option<&Word> {
 }
 
 fn update_screen(
-    warning: bool,
+    warning: &str,
     current_word: &Word,
     current_txt: &str,
     success: u16,
