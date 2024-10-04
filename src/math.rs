@@ -68,7 +68,7 @@ pub fn run(options: String, min: i32, max: i32) {
                     user_input.clear();
                 }
             }
-            Key::Char(c) if c.is_ascii_digit() || c == '+' || c == '-' || c == '*' => {
+            Key::Char(c) if c.is_ascii_digit() || c == '+' || c == '-' || c == '*' || c == '/' => {
                 user_input.push(c);
             }
             Key::Backspace => {

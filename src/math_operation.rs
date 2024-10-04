@@ -34,6 +34,9 @@ impl Operation {
         if options.contains("S") {
             operators.push('-');
         }
+        if options.contains("D") {
+            operators.push('/');
+        }
         if options.contains("M") || operators.is_empty() {
             operators.push('*');
         }
@@ -52,14 +55,27 @@ impl Operation {
     pub fn generate(&mut self) {
         let nb_numbers = rand::thread_rng().gen_range(2..=self.nb_terms);
 
+        let mut previous = 1;
         for i in 0..nb_numbers {
-            let num = rand::thread_rng().gen_range(self.min..=self.max);
             let op = self.operators[rand::thread_rng().gen_range(0..self.operators.len())];
 
+            let num = if op == '/' {
+                previous * rand::thread_rng().gen_range(2..=12)
+            } else {
+                rand::thread_rng().gen_range(self.min..=self.max)
+            };
+
+            if op == '/' {
+                previous *= num;
+            } else {
+                previous = num;
+            }
+
+            // Add them from the back for divisions
             if i == 0 {
                 self.to_string = format!("{}", num);
             } else {
-                self.to_string = format!("{} {} {}", self.to_string, op, num);
+                self.to_string = format!("{} {} {}", num, op, self.to_string);
             }
         }
 
@@ -78,7 +94,7 @@ pub fn clean_operation(txt: &str) -> String {
 
     for c in p.chars() {
         println!("-> {} -> {}", previous, c);
-        if c == '+' || c == '*' || (c == '-' && previous.is_ascii_digit()) {
+        if c == '+' || c == '*' || c == '/' || (c == '-' && previous.is_ascii_digit()) {
             output = format!("{} {} ", output, c)
         } else if c == '-' && previous.is_ascii_digit() {
             output = format!("{} {}", output, c)
@@ -101,7 +117,7 @@ fn convert(txt: &str) -> Result<VecDeque<Field>> {
     // Clean
     let txt: Vec<char> = txt
         .chars()
-        .filter(|c| c.is_ascii_digit() || *c == '+' || *c == '-' || *c == '*')
+        .filter(|c| c.is_ascii_digit() || *c == '+' || *c == '-' || *c == '*' || *c == '/')
         .collect();
 
     // Create a Field container
@@ -116,7 +132,7 @@ fn convert(txt: &str) -> Result<VecDeque<Field>> {
             operations.push_back(Field::Term(num));
             current.clear();
 
-            if *c == '+' || *c == '*' || *c == '-' {
+            if *c == '+' || *c == '*' || *c == '-' || *c == '/' {
                 operations.push_back(Field::Operator(*c));
             }
         } else {
@@ -129,7 +145,10 @@ fn convert(txt: &str) -> Result<VecDeque<Field>> {
 
 fn resolve(mut operations: VecDeque<Field>) -> Result<String> {
     if !operations.is_empty() {
-        while let Some(position) = operations.iter().position(|v| *v == Field::Operator('*')) {
+        while let Some(position) = operations
+            .iter()
+            .position(|v| *v == Field::Operator('*') || *v == Field::Operator('/'))
+        {
             // Multiplication first --
             let b = match operations.remove(position + 1).unwrap() {
                 Field::Term(v) => v,
@@ -139,7 +158,11 @@ fn resolve(mut operations: VecDeque<Field>) -> Result<String> {
                 Field::Term(v) => v,
                 _ => return Err(anyhow!("Incorrect operation, expected a term")),
             };
-            operations[position - 1] = Field::Term(a * b);
+            operations[position - 1] = match operations[position - 1] {
+                Field::Operator('/') => Field::Term(a / b),
+                Field::Operator('*') => Field::Term(a * b),
+                _ => return Err(anyhow!("Incorrect operation, expected a term")),
+            };
         }
 
         // Rest --
