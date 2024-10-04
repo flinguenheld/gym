@@ -51,7 +51,7 @@ pub fn run(options: String, min: i32, max: i32) {
                     success += 1;
                     warning = false;
                     operation.generate();
-                } else if let Some(user_operation_result) = convert_and_resolve(&user_input) {
+                } else if let Ok(user_operation_result) = convert_and_resolve(&user_input) {
                     if user_operation_result == operation.result {
                         operation.to_string = math_operation::clean_operation(&user_input);
                         warning = false;

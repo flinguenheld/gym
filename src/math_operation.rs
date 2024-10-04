@@ -1,3 +1,4 @@
+use anyhow::{anyhow, Result};
 use rand::Rng;
 use std::collections::VecDeque;
 
@@ -62,7 +63,7 @@ impl Operation {
             }
         }
 
-        if let Some(operations) = convert(self.to_string.as_str()) {
+        if let Ok(operations) = convert(self.to_string.as_str()) {
             self.result = resolve(operations).unwrap();
         }
     }
@@ -80,7 +81,6 @@ pub fn clean_operation(txt: &str) -> String {
         if c == '+' || c == '*' || (c == '-' && previous.is_ascii_digit()) {
             output = format!("{} {} ", output, c)
         } else if c == '-' && previous.is_ascii_digit() {
-            println!("heps");
             output = format!("{} {}", output, c)
         } else {
             output = format!("{}{}", output, c)
@@ -90,15 +90,12 @@ pub fn clean_operation(txt: &str) -> String {
 
     output
 }
-pub fn convert_and_resolve(txt: &str) -> Option<String> {
-    if let Some(operations) = convert(txt) {
-        return resolve(operations);
-    }
-    None
+pub fn convert_and_resolve(txt: &str) -> Result<String> {
+    resolve(convert(txt)?)
 }
 
 // --
-fn convert(txt: &str) -> Option<VecDeque<Field>> {
+fn convert(txt: &str) -> Result<VecDeque<Field>> {
     let mut operations: VecDeque<Field> = VecDeque::new();
 
     // Clean
@@ -114,12 +111,10 @@ fn convert(txt: &str) -> Option<VecDeque<Field>> {
             if i == txt.len() - 1 {
                 current.push(*c);
             }
-            if let Ok(num) = current.parse::<i32>() {
-                operations.push_back(Field::Term(num));
-                current.clear();
-            } else {
-                return None;
-            }
+
+            let num = current.parse::<i32>()?;
+            operations.push_back(Field::Term(num));
+            current.clear();
 
             if *c == '+' || *c == '*' || *c == '-' {
                 operations.push_back(Field::Operator(*c));
@@ -129,19 +124,19 @@ fn convert(txt: &str) -> Option<VecDeque<Field>> {
         }
     }
 
-    Some(operations)
+    Ok(operations)
 }
 
-fn resolve(mut operations: VecDeque<Field>) -> Option<String> {
+fn resolve(mut operations: VecDeque<Field>) -> Result<String> {
     while let Some(position) = operations.iter().position(|v| *v == Field::Operator('*')) {
         // Multiplication first --
         let b = match operations.remove(position + 1).unwrap() {
             Field::Term(v) => v,
-            _ => return None,
+            _ => return Err(anyhow!("Incorrect operation, expected a term")),
         };
         let a = match operations.remove(position - 1).unwrap() {
             Field::Term(v) => v,
-            _ => return None,
+            _ => return Err(anyhow!("Incorrect operation, expected a term")),
         };
         operations[position - 1] = Field::Term(a * b);
     }
@@ -150,12 +145,12 @@ fn resolve(mut operations: VecDeque<Field>) -> Option<String> {
     while operations.len() > 1 {
         let a = match operations.pop_front().unwrap() {
             Field::Term(v) => v,
-            _ => return None,
+            _ => return Err(anyhow!("Incorrect operation, expected a term")),
         };
         let op = operations.pop_front().unwrap();
         let b = match operations.pop_front().unwrap() {
             Field::Term(v) => v,
-            _ => return None,
+            _ => return Err(anyhow!("Incorrect operation, expected a term")),
         };
 
         match op {
@@ -163,12 +158,12 @@ fn resolve(mut operations: VecDeque<Field>) -> Option<String> {
                 '+' => a + b,
                 _ => a - b,
             })),
-            _ => return None,
+            _ => return Err(anyhow!("Incorrect operation, expected an operator")),
         };
     }
 
     match operations.front().unwrap() {
-        Field::Term(v) => Some(v.to_string()),
-        _ => None,
+        Field::Term(v) => Ok(v.to_string()),
+        _ => return Err(anyhow!("Resolve failed")),
     }
 }
