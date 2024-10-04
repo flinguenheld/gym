@@ -1,3 +1,4 @@
+use crate::math_operation::convert_and_resolve;
 use crate::{math_operation, window};
 use std::io::{stdin, stdout, Stdout, Write};
 use termion::event::Key;
@@ -50,6 +51,14 @@ pub fn run(options: String, min: i32, max: i32) {
                     success += 1;
                     warning = false;
                     operation.generate();
+                } else if let Some(user_operation_result) = convert_and_resolve(&user_input) {
+                    if user_operation_result == operation.result {
+                        operation.to_string = math_operation::clean_operation(&user_input);
+                        warning = false;
+                    } else {
+                        fails += 1;
+                        warning = true;
+                    }
                 } else {
                     fails += 1;
                     warning = true;
@@ -57,7 +66,7 @@ pub fn run(options: String, min: i32, max: i32) {
 
                 user_input.clear();
             }
-            Key::Char(c) if c.is_ascii_digit() || c == '-' => {
+            Key::Char(c) if c.is_ascii_digit() || c == '+' || c == '-' || c == '*' => {
                 user_input.push(c);
             }
             Key::Backspace => {
