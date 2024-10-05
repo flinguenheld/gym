@@ -1,27 +1,27 @@
 ## gym 💪
 
 Maintain your memory level with gym !  
-This small game allows you to practice mental arithmetic in the terminal. 🧠
+This small game allows you to practice mental arithmetic in your terminal. 🧠
 
+```
+ CTL+C or ESC to quit.   
+ CTL+P to pass the current question.
+```
 
 ### Maths
 
-`gym --multiplication`  
-`gym --addition`  
-`gym --substraction`  
+`gym --maths <MATHS> (A)ddition (S)ubtraction (M)ultiplication (D)ivision (2..) number of terms [default: 2]`
 
 <div align="center">
-  <img src="./images/multiplication.gif">
+  <img src="./images/maths.gif">
 </div>
 
-
-💡 Press *CTL+C* or *ESC* to quit.
-
+💡 Answer can be another operation: 2 + 2 = 4 / 2 + 1 * 2  
 
 ### Keyboard
-Don't tell me you've changed your layout again 😮‍💨 !  
+Don't tell me you've changed your layout again 😮‍💨  
 
-`gym --keyboard <KEYBOARD>  Options: (L)etters (C)aps (N)umbers (S)ymbols (0-9...)nb characters`
+`gym --keyboard <KEYBOARD>  (L)etters (C)aps (N)umbers (S)ymbols (1..) nb characters [default: 3]`
 
 <div align="center">
   <img src="./images/keyboard.gif">
@@ -59,6 +59,6 @@ Download the release and copy **gym** and **vocabulary.txt** files in your **~/b
 
 `gym -h` for the full command list.  
 
-Or clone this repo and build it with cargo (don't forget to copy vocabulary.txt):
+Or clone this repo and build it with cargo:
 
 `cargo run --release`

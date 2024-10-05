@@ -24,7 +24,8 @@ pub fn print_window(txt: String, title: &str, success: u16, fails: u16, icon: &s
     }
 }
 
-/// Cut the line in n lines of chars_per_line length
+/// Cut the txt in n lines of chars_per_line length.
+/// on_space = true to wait the next space.
 pub fn format(txt: String, chars_per_line: usize, on_space: bool) -> String {
     let mut lines = String::new();
     let mut l = String::new();

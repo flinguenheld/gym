@@ -70,7 +70,7 @@ pub fn run(options: &str) {
                     current_value = new_value(&char_list, nb);
                 } else {
                     fails += 1;
-                    warning = "☒";
+                    warning = "❌";
                 }
 
                 user_input.clear();

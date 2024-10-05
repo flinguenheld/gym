@@ -20,7 +20,8 @@ struct Args {
     #[arg(
         short,
         long,
-        help = "(A)ddition (S)ubtraction (M)ultiplication (D)ivision (2..) number of terms [default: 2]"
+        help = "(A)ddition (S)ubtraction (M)ultiplication (D)ivision (2..) number of terms [default: 2]
+(Answer can be another operation: 2 + 2 = 4 / 2 + 1 * 2)"
     )]
     maths: Option<String>,
     #[arg(

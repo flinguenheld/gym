@@ -78,6 +78,7 @@ pub fn run(options: String, min: i32, max: i32) {
                 fails += 1;
                 operation.generate();
                 user_input.clear();
+                icon = "";
             }
             _ => {}
         }

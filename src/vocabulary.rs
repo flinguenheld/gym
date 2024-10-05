@@ -89,7 +89,7 @@ pub fn run() {
                                 current_word = get_random_word(&words).unwrap();
                             } else {
                                 fails += 1;
-                                warning = "☒";
+                                warning = "❌";
                             }
 
                             user_input.clear();
