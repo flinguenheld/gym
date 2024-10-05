@@ -6,36 +6,47 @@ mod window;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
-#[command(version, about, long_about=None,after_help = "  -> Ctrl+C or ESC to quit")]
+#[command(
+    version,
+    long_about = "Practice makes perfect!
+Gym allows you to train your maths, keyboard and vocabulary skills in your terminal.
+See more information here: https://github.com/flinguenheld/gym
+
+ex:     gym -m AS4      -> Maths: Additions and Subtrations with 2 to 4 terms
+        gym -k LCN15    -> Keyboard: Letters, Caps, Numbers with 15 characters",
+    after_help = "Ctrl+C or ESC to quit\nCtrl+P to pass the current question"
+)]
 struct Args {
     #[arg(
         short,
         long,
-        required = false,
-        help = "Options: (A)ddition (S)ubtraction (M)ultiplication (2..) number of terms"
+        help = "(A)ddition (S)ubtraction (M)ultiplication (D)ivision (2..) number of terms [default: 2]"
     )]
     maths: Option<String>,
     #[arg(
         long,
         default_value_t = 2,
+        allow_negative_numbers = true,
         help = "min value for maths (can be negative)"
     )]
     min: i32,
     #[arg(
         long,
         default_value_t = 9,
+        allow_negative_numbers = true,
         help = "max value for maths (can be negative)"
     )]
     max: i32,
-
-    #[arg(short, long, help = "Press Tab for help, requires 'vocabulary.txt'")]
-    vocabulary: bool,
-
     #[arg(
         short,
         long,
-        required = false,
-        help = "Options: (L)etters (C)aps (N)umbers (S)ymbols (1..) nb characters"
+        help = "Press Tab to display a hint, requires the file 'vocabulary.txt' in the same folder than gym"
+    )]
+    vocabulary: bool,
+    #[arg(
+        short,
+        long,
+        help = "(L)etters (C)aps (N)umbers (S)ymbols (1..) nb characters [default: 3]"
     )]
     keyboard: Option<String>,
 }
