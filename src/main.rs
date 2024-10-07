@@ -1,3 +1,4 @@
+mod base;
 mod keyboard;
 mod math;
 mod math_operation;
@@ -38,6 +39,8 @@ struct Args {
         help = "max value for maths (can be negative)"
     )]
     max: i32,
+    #[arg(short, long, help = "(B)inary (D)ecimal (H)exadecimal (100..) maxi")]
+    base: Option<String>,
     #[arg(
         short,
         long,
@@ -57,9 +60,13 @@ fn main() {
 
     if let Some(m) = args.maths {
         math::run(m.to_uppercase(), args.min, args.max);
-    } else if let Some(a) = args.keyboard {
-        keyboard::run(&a.to_uppercase());
+    } else if let Some(k) = args.keyboard {
+        keyboard::run(&k.to_uppercase());
     } else if args.vocabulary {
         vocabulary::run();
+    } else if let Some(mode) = args.base {
+        base::run(mode);
+    } else {
+        println!("No option given, see gym -h");
     }
 }
