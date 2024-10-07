@@ -1,4 +1,4 @@
-use crate::window;
+use crate::window::{self, Window};
 
 use rand::Rng;
 use std::collections::VecDeque;
@@ -10,7 +10,6 @@ use termion::raw::{IntoRawMode, RawTerminal};
 const AVAILABLE_OPT: [char; 3] = ['B', 'D', 'H'];
 
 pub fn run(options: String) {
-    // Init --
     let mut maxi: u32 = options
         .chars()
         .filter(|c| c.is_ascii_digit())
@@ -20,53 +19,33 @@ pub fn run(options: String) {
         maxi = 10;
     }
 
-    let opt: Vec<char> = options
+    let options: Vec<char> = options
         .chars()
         .filter(|c| c.is_ascii_alphabetic())
         .collect();
 
-    let base_from = opt.first().unwrap_or(&'\0').to_ascii_uppercase();
-    let base_to = opt.last().unwrap_or(&'\0').to_ascii_uppercase();
+    let base_question = options.first().unwrap_or(&'\0').to_ascii_uppercase();
+    let base_answer = options.last().unwrap_or(&'\0').to_ascii_uppercase();
 
-    let title = format!(
-        "{} to {}",
-        match base_from {
-            'B' => "binary",
-            'D' => "decimal",
-            _ => "hexadecimal",
-        },
-        match base_to {
-            'B' => "binary",
-            'D' => "decimal",
-            _ => "hexadecimal",
-        }
-    );
-
-    if AVAILABLE_OPT.contains(&base_from)
-        && AVAILABLE_OPT.contains(&base_to)
-        && base_from != base_to
+    if AVAILABLE_OPT.contains(&base_question)
+        && AVAILABLE_OPT.contains(&base_answer)
+        && base_question != base_answer
     {
-        // --
-        let mut success: u16 = 0;
-        let mut fails: u16 = 0;
-        let mut warning = "";
-        let (mut current_value, mut current_answer) = new_value(maxi, base_from, base_to);
-        let mut user_input = String::from("");
+        let mut window = Window::new(format!(
+            "{} to {}",
+            option_to_string(base_question),
+            option_to_string(base_answer)
+        ));
+
+        let (mut question, mut answer) = new_value(base_question, base_answer, maxi);
+        let mut user_input = String::new();
+        let mut answer_given = false;
 
         // Raw mode mandatory to read key events --
         let stdin = stdin();
         let mut stdout = stdout().into_raw_mode().unwrap();
 
-        update_screen(
-            success,
-            fails,
-            warning,
-            title.as_str(),
-            &current_value,
-            (base_from, base_to),
-            &user_input,
-            &mut stdout,
-        );
+        update_screen(&window, question.as_str(), "".to_string(), &mut stdout);
 
         // Game loop --
         for c in stdin.keys() {
@@ -76,16 +55,19 @@ pub fn run(options: String) {
                     break;
                 }
                 Key::Char('\n') => {
-                    if current_answer == user_input {
-                        success += 1;
-                        warning = "";
-                        (current_value, current_answer) = new_value(maxi, base_from, base_to);
+                    if answer == user_input {
+                        if !answer_given {
+                            window.success += 1;
+                        }
+                        window.icon = window::Icon::None;
+                        (question, answer) = new_value(base_question, base_answer, maxi);
                     } else {
-                        fails += 1;
-                        warning = "❌";
+                        window.fails += 1;
+                        window.icon = window::Icon::Warning;
                     }
 
                     user_input.clear();
+                    answer_given = false;
                 }
                 Key::Char(c) => {
                     user_input.push(c);
@@ -97,26 +79,22 @@ pub fn run(options: String) {
                     user_input.clear();
                 }
                 Key::Ctrl('a') | Key::Ctrl('A') => {
-                    fails += 1;
-                    user_input = current_answer.clone();
-                    // TODO: Add a bool to skip the next enter
+                    window.icon = window::Icon::Answer;
+                    user_input = answer.clone();
+                    answer_given = true;
                 }
                 Key::Ctrl('p') | Key::Ctrl('P') => {
-                    fails += 1;
-                    warning = "";
-                    (current_value, current_answer) = new_value(maxi, base_from, base_to);
+                    window.fails += 1;
+                    window.icon = window::Icon::Warning;
+                    (question, answer) = new_value(base_question, base_answer, maxi);
                 }
                 _ => {}
             }
 
             update_screen(
-                success,
-                fails,
-                warning,
-                title.as_str(),
-                &current_value,
-                (base_from, base_to),
-                &user_input,
+                &window,
+                question.as_str(),
+                format_to_display(base_answer, user_input.as_str()),
                 &mut stdout,
             );
         }
@@ -125,62 +103,58 @@ pub fn run(options: String) {
     }
 }
 
-// --
-fn new_value(maxi: u32, from_type: char, to_type: char) -> (String, String) {
-    let val = rand::thread_rng().gen_range(1..=maxi);
-    (convert(from_type, val), convert(to_type, val))
-}
-fn convert(to: char, value: u32) -> String {
-    match to {
-        'B' => format!("{:b}", value),
-        'H' => format!("{:X}", value),
-        _ => format!("{}", value),
+/// Give the full base text
+fn option_to_string(base: char) -> &'static str {
+    match base {
+        'B' => "binary",
+        'D' => "decimal",
+        _ => "hexadecimal",
     }
 }
 
-// --
-fn update_screen(
-    success: u16,
-    fails: u16,
-    warning: &str,
-    title: &str,
-    current_value: &str,
-    formats: (char, char),
-    user_input: &str,
-    stdout: &mut RawTerminal<Stdout>,
-) {
-    window::print_window(
-        window::format(
-            format!(
-                "{} -> {}",
-                format(current_value, formats.0),
-                format(user_input, formats.1)
-            ),
-            45,
-            false,
-        ),
-        title,
-        success,
-        fails,
-        warning,
-    );
+/// Generate a new value then return the formated question and the unformated answer
+fn new_value(base_question: char, base_answer: char, maxi: u32) -> (String, String) {
+    let val = rand::thread_rng().gen_range(1..=maxi);
 
-    stdout.flush().unwrap();
+    let question = from_int(base_question, val);
+    let answer = from_int(base_answer, val);
+
+    (format_to_display(base_question, question.as_str()), answer)
 }
 
-/// Add spaces according to the base
-fn format(txt: &str, base: char) -> String {
+fn from_int(base: char, new_value: u32) -> String {
+    match base {
+        'B' => format!("{:b}", new_value),
+        'H' => format!("{:X}", new_value),
+        _ => format!("{}", new_value),
+    }
+}
+
+/// Add whitespaces to facititate the reading
+fn format_to_display(base: char, value: &str) -> String {
     let nb_per_group = match base {
-        'D' => 3,
-        _ => 4,
+        'B' => 4,
+        'H' => 4,
+        _ => 3,
     };
 
     let mut output = VecDeque::new();
-    for (i, c) in txt.chars().rev().enumerate() {
+    for (i, c) in value.chars().rev().enumerate() {
         if i > 0 && i % nb_per_group == 0 {
             output.push_front(' ');
         }
         output.push_front(c);
     }
     output.iter().collect()
+}
+
+// --
+fn update_screen(
+    window: &Window,
+    question: &str,
+    answer: String,
+    stdout: &mut RawTerminal<Stdout>,
+) {
+    window.print(format!("{} -> {}", question, answer));
+    stdout.flush().unwrap();
 }
