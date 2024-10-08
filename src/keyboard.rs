@@ -1,5 +1,4 @@
-use crate::window;
-
+use crate::window::{self, Window};
 use rand::Rng;
 use std::io::{stdin, stdout, Stdout, Write};
 use termion::event::Key;
@@ -7,7 +6,6 @@ use termion::input::TermRead;
 use termion::raw::{IntoRawMode, RawTerminal};
 
 pub fn run(options: &str) {
-    // Init --
     let mut nb: u32 = options
         .chars()
         .filter(|c| c.is_ascii_digit())
@@ -32,74 +30,57 @@ pub fn run(options: &str) {
         char_list.push_str("$^[]&|~!?{}\"\\.,()*_-:;<>/'`@%#+=");
     }
 
-    if char_list.is_empty() {
-        println!("\x1b[91mError: \x1b[0m Wrong options, try gym -h");
-        return;
-    }
+    if !char_list.is_empty() {
+        let mut window = Window::new("Keyboard".to_string());
+        let mut current_value = new_value(&char_list, nb);
+        let mut user_input = String::from("");
 
-    let mut success: u16 = 0;
-    let mut fails: u16 = 0;
-    let mut warning = "";
-    let mut current_value = new_value(&char_list, nb);
-    let mut user_input = String::from("");
+        // Raw mode mandatory to read key events --
+        let stdin = stdin();
+        let mut stdout = stdout().into_raw_mode().unwrap();
 
-    // Raw mode mandatory to read key events --
-    let stdin = stdin();
-    let mut stdout = stdout().into_raw_mode().unwrap();
+        update_screen(&window, &current_value, &user_input, &mut stdout);
 
-    update_screen(
-        success,
-        fails,
-        warning,
-        &current_value,
-        &user_input,
-        &mut stdout,
-    );
-
-    // Game loop --
-    for c in stdin.keys() {
-        match c.unwrap() {
-            Key::Esc | Key::Ctrl('c') => {
-                print!("{}", termion::clear::All);
-                break;
-            }
-            Key::Char('\n') => {
-                if current_value == user_input {
-                    success += 1;
-                    warning = "";
-                    current_value = new_value(&char_list, nb);
-                } else {
-                    fails += 1;
-                    warning = "❌";
+        // Game loop --
+        for c in stdin.keys() {
+            match c.unwrap() {
+                Key::Esc | Key::Ctrl('c') => {
+                    print!("{}", termion::clear::All);
+                    break;
                 }
+                Key::Char('\n') => {
+                    if current_value == user_input {
+                        window.success += 1;
+                        window.icon = window::Icon::None;
+                        current_value = new_value(&char_list, nb);
+                    } else {
+                        window.fails += 1;
+                        window.icon = window::Icon::Cross;
+                    }
 
-                user_input.clear();
+                    user_input.clear();
+                }
+                Key::Char(c) => {
+                    user_input.push(c);
+                }
+                Key::Backspace => {
+                    user_input.pop();
+                }
+                Key::Ctrl('u') => {
+                    user_input.clear();
+                }
+                Key::Ctrl('p') | Key::Ctrl('P') => {
+                    window.fails += 1;
+                    window.icon = window::Icon::None;
+                    current_value = new_value(&char_list, nb);
+                }
+                _ => {}
             }
-            Key::Char(c) => {
-                user_input.push(c);
-            }
-            Key::Backspace => {
-                user_input.pop();
-            }
-            Key::Ctrl('u') => {
-                user_input.clear();
-            }
-            Key::Ctrl('p') | Key::Ctrl('P') => {
-                fails += 1;
-                warning = "";
-                current_value = new_value(&char_list, nb);
-            }
-            _ => {}
+
+            update_screen(&window, &current_value, &user_input, &mut stdout);
         }
-
-        update_screen(
-            success,
-            fails,
-            warning,
-            &current_value,
-            &user_input,
-            &mut stdout,
-        );
+    } else {
+        println!("\x1b[91mError: \x1b[0m Wrong options, see gym -h");
     }
 }
 
@@ -120,20 +101,15 @@ fn new_value(char_list: &str, nb_chars: u32) -> String {
 
 // --
 fn update_screen(
-    success: u16,
-    fails: u16,
-    warning: &str,
+    window: &Window,
     current_value: &str,
     user_input: &str,
     stdout: &mut RawTerminal<Stdout>,
 ) {
-    window::print_window(
-        window::format(format!("{} -> {}", current_value, user_input), 45, false),
-        "Keyboard",
-        success,
-        fails,
-        warning,
-    );
-
+    window.print(window::format(
+        &format!("{} -> {}", current_value, user_input),
+        45,
+        false,
+    ));
     stdout.flush().unwrap();
 }

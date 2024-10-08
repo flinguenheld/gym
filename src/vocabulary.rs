@@ -1,4 +1,4 @@
-use crate::window;
+use crate::window::{self, Window};
 use rand::Rng;
 use std::io::{stdin, stdout, Stdout, Write};
 use std::{env, fs};
@@ -35,24 +35,14 @@ pub fn run() {
             let mut stdout = stdout().into_raw_mode().unwrap();
 
             // --
-            let mut success: u16 = 0;
-            let mut fails: u16 = 0;
-            let mut warning = "";
-
+            let mut window = Window::new("Vocabulary".to_string());
             let mut user_input = String::from("");
             let mut help = String::from("");
+            let mut answer_given = false;
 
             // Get, check & display the first word --
             if let Some(mut current_word) = get_random_word(&words) {
-                update_screen(
-                    warning,
-                    current_word,
-                    &user_input,
-                    success,
-                    fails,
-                    &help,
-                    &mut stdout,
-                );
+                update_screen(&window, current_word, &user_input, &help, &mut stdout);
 
                 for c in stdin.keys() {
                     match c.unwrap() {
@@ -62,7 +52,7 @@ pub fn run() {
                         }
 
                         // Tab to display help (all synonyms with stars).
-                        Key::Char('\t') => {
+                        Key::Char('\t') | Key::Ctrl('h') | Key::Ctrl('H') => {
                             help = current_word
                                 .synonyms
                                 .join(" - ")
@@ -84,16 +74,19 @@ pub fn run() {
                                 .synonyms
                                 .contains(&user_input.trim().to_string())
                             {
-                                success += 1;
-                                warning = "";
+                                if !answer_given {
+                                    window.success += 1;
+                                }
+                                window.icon = window::Icon::None;
                                 current_word = get_random_word(&words).unwrap();
                             } else {
-                                fails += 1;
-                                warning = "❌";
+                                window.fails += 1;
+                                window.icon = window::Icon::Cross;
                             }
 
                             user_input.clear();
                             help.clear();
+                            answer_given = false;
                         }
                         Key::Backspace => {
                             user_input.pop();
@@ -101,23 +94,21 @@ pub fn run() {
                         Key::Char(c) => {
                             user_input.push(c);
                         }
+                        Key::Ctrl('a') | Key::Ctrl('A') => {
+                            window.icon = window::Icon::Gift;
+                            user_input = current_word.synonyms.first().unwrap().clone();
+                            answer_given = true;
+                        }
                         Key::Ctrl('p') | Key::Ctrl('P') => {
-                            fails += 1;
-                            warning = "";
+                            window.fails += 1;
+                            window.icon = window::Icon::None;
                             current_word = get_random_word(&words).unwrap();
+                            help.clear();
                         }
                         _ => {}
                     }
 
-                    update_screen(
-                        warning,
-                        current_word,
-                        &user_input,
-                        success,
-                        fails,
-                        &help,
-                        &mut stdout,
-                    );
+                    update_screen(&window, current_word, &user_input, &help, &mut stdout);
                 }
             } else {
                 println!("\r");
@@ -148,20 +139,20 @@ fn get_random_word(words: &[Word]) -> Option<&Word> {
 }
 
 fn update_screen(
-    warning: &str,
+    window: &Window,
     current_word: &Word,
     current_txt: &str,
-    success: u16,
-    fails: u16,
     help: &String,
     stdout: &mut RawTerminal<Stdout>,
 ) {
-    let txt = if !help.is_empty() {
-        format!("    💡{}\n\n{} = {}", help, current_word.value, current_txt)
+    if !help.is_empty() {
+        window.print(format!(
+            "💡{}\n\n{} = {}",
+            help, current_word.value, current_txt
+        ));
     } else {
-        format!("{} = {}", current_word.value, current_txt)
+        window.print(format!("{} = {}", current_word.value, current_txt));
     };
 
-    window::print_window(txt, "Vocabulary", success, fails, warning);
     stdout.flush().unwrap();
 }

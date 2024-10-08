@@ -14,8 +14,9 @@ Gym allows you to train your maths, keyboard and vocabulary skills in your termi
 See more information here: https://github.com/flinguenheld/gym
 
 ex:     gym -m AS4      -> Maths: Additions and Subtrations with 2 to 4 terms
-        gym -k LCN15    -> Keyboard: Letters, Caps, Numbers with 15 characters",
-    after_help = "Ctrl+C or ESC to quit\nCtrl+P to pass the current question"
+        gym -k LCN15    -> Keyboard: Letters, Caps, Numbers with 15 characters
+        gym -b BD256    -> Base: Binary to Deciamal from 1 to 256",
+    after_help = "Ctrl+C or ESC to quit\nCtrl+P to pass the current question\nCtrl+A to get the answer"
 )]
 struct Args {
     #[arg(
@@ -39,7 +40,7 @@ struct Args {
         help = "max value for maths (can be negative)"
     )]
     max: i32,
-    #[arg(short, long, help = "(B)inary (D)ecimal (H)exadecimal (100..) maxi")]
+    #[arg(short, long, help = "(B)inary (D)ecimal (H)exadecimal (10..) maxi")]
     base: Option<String>,
     #[arg(
         short,
@@ -67,6 +68,6 @@ fn main() {
     } else if let Some(mode) = args.base {
         base::run(mode);
     } else {
-        println!("No option given, see gym -h");
+        println!("\x1b[91mError: \x1b[0m Wrong options, see gym -h");
     }
 }

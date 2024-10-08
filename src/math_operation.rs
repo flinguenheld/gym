@@ -19,7 +19,7 @@ pub struct Operation {
 }
 
 impl Operation {
-    pub fn new(options: String, mut nb_terms: u32, min: i32, mut max: i32) -> Self {
+    pub fn new(options: String, mut nb_terms: u32, min: i32, mut max: i32) -> Option<Self> {
         if min > max {
             max = min + 5;
         }
@@ -37,17 +37,21 @@ impl Operation {
         if options.contains("D") {
             operators.push('/');
         }
-        if options.contains("M") || operators.is_empty() {
+        if options.contains("M") {
             operators.push('*');
         }
 
-        Self {
-            to_string: "0 + 0".to_string(),
-            result: "0".to_string(),
-            operators,
-            min,
-            max,
-            nb_terms,
+        if operators.is_empty() {
+            None
+        } else {
+            Some(Self {
+                to_string: "0 + 0".to_string(),
+                result: "0".to_string(),
+                operators,
+                min,
+                max,
+                nb_terms,
+            })
         }
     }
 

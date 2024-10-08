@@ -1,4 +1,5 @@
 use crate::math_operation::convert_and_resolve;
+use crate::window::Window;
 use crate::{math_operation, window};
 use std::io::{stdin, stdout, Stdout, Write};
 use termion::event::Key;
@@ -6,12 +7,7 @@ use termion::input::TermRead;
 use termion::raw::{IntoRawMode, RawTerminal};
 
 pub fn run(options: String, min: i32, max: i32) {
-    // Init --
-    let mut success: u16 = 0;
-    let mut fails: u16 = 0;
-    let mut icon = "";
-
-    let mut operation = math_operation::Operation::new(
+    if let Some(mut operation) = math_operation::Operation::new(
         options
             .chars()
             .filter(|c| c.is_ascii_alphabetic())
@@ -22,94 +18,89 @@ pub fn run(options: String, min: i32, max: i32) {
             .fold(0_u32, |acc, d| acc * 10 + d.to_digit(10).unwrap_or(0)),
         min,
         max,
-    );
-    operation.generate();
-    let mut user_input = String::from("");
+    ) {
+        // Raw mode mandatory to read key events --
+        let stdin = stdin();
+        let mut stdout = stdout().into_raw_mode().unwrap();
 
-    // Raw mode mandatory to read key events --
-    let stdin = stdin();
-    let mut stdout = stdout().into_raw_mode().unwrap();
+        let mut window = Window::new("Maths".to_string());
+        let mut user_input = String::from("");
+        let mut answer_given = false;
+        operation.generate();
 
-    update_screen(
-        &operation,
-        success,
-        fails,
-        icon,
-        user_input.as_str(),
-        &mut stdout,
-    );
+        update_screen(&operation, &window, user_input.as_str(), &mut stdout);
 
-    // Game loop --
-    for c in stdin.keys() {
-        match c.unwrap() {
-            Key::Esc | Key::Ctrl('c') => {
-                print!("{}", termion::clear::All);
-                break;
-            }
-            Key::Char('\n') => {
-                if !user_input.is_empty() {
-                    if user_input == operation.result {
-                        success += 1;
-                        icon = "";
-                        operation.generate();
-                    } else if let Ok(user_operation_result) = convert_and_resolve(&user_input) {
-                        if user_operation_result == operation.result {
-                            operation.to_string = math_operation::clean_operation(&user_input);
-                            icon = "🔄";
-                        } else {
-                            fails += 1;
-                            icon = "❌";
-                        }
-                    } else {
-                        fails += 1;
-                        icon = "❌";
-                    }
-
-                    user_input.clear();
+        // Game loop --
+        for c in stdin.keys() {
+            match c.unwrap() {
+                Key::Esc | Key::Ctrl('c') => {
+                    print!("{}", termion::clear::All);
+                    break;
                 }
-            }
-            Key::Char(c) if c.is_ascii_digit() || c == '+' || c == '-' || c == '*' || c == '/' => {
-                user_input.push(c);
-            }
-            Key::Backspace => {
-                user_input.pop();
-            }
-            Key::Ctrl('p') | Key::Ctrl('P') => {
-                fails += 1;
-                operation.generate();
-                user_input.clear();
-                icon = "";
-            }
-            _ => {}
-        }
+                Key::Char('\n') => {
+                    if !user_input.is_empty() {
+                        if user_input == operation.result {
+                            if !answer_given {
+                                window.success += 1;
+                            }
+                            window.icon = window::Icon::None;
+                            operation.generate();
+                        } else if let Ok(user_operation_result) = convert_and_resolve(&user_input) {
+                            if user_operation_result == operation.result {
+                                operation.to_string = math_operation::clean_operation(&user_input);
+                                window.icon = window::Icon::Loop;
+                            } else {
+                                window.fails += 1;
+                                window.icon = window::Icon::Cross;
+                            }
+                        } else {
+                            window.fails += 1;
+                            window.icon = window::Icon::Cross;
+                        }
 
-        update_screen(
-            &operation,
-            success,
-            fails,
-            icon,
-            user_input.as_str(),
-            &mut stdout,
-        );
+                        answer_given = false;
+                        user_input.clear();
+                    }
+                }
+                Key::Char(c)
+                    if c.is_ascii_digit() || c == '+' || c == '-' || c == '*' || c == '/' =>
+                {
+                    user_input.push(c);
+                }
+                Key::Backspace => {
+                    user_input.pop();
+                }
+                Key::Ctrl('a') | Key::Ctrl('A') => {
+                    window.icon = window::Icon::Gift;
+                    user_input = operation.result.clone();
+                    answer_given = true;
+                }
+                Key::Ctrl('p') | Key::Ctrl('P') => {
+                    window.fails += 1;
+                    operation.generate();
+                    user_input.clear();
+                    window.icon = window::Icon::None;
+                }
+                _ => {}
+            }
+
+            update_screen(&operation, &window, user_input.as_str(), &mut stdout);
+        }
+    } else {
+        println!("\x1b[91mError: \x1b[0m Wrong options, see gym -h");
     }
 }
 
 fn update_screen(
     operation: &math_operation::Operation,
-    success: u16,
-    fails: u16,
-    warning: &str,
+    window: &Window,
     user_input: &str,
     stdout: &mut RawTerminal<Stdout>,
 ) {
-    window::print_window(
-        window::format(operation.to_string.clone(), 20, true),
-        "Maths",
-        success,
-        fails,
-        warning,
-    );
-    print!(" = {}", user_input);
-
+    window.print(format!(
+        "{} = {}",
+        window::format(&operation.to_string, 28, true),
+        window::format(user_input, 23, false),
+    ));
     stdout.flush().unwrap();
 }

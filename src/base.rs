@@ -55,7 +55,7 @@ pub fn run(options: String) {
                     break;
                 }
                 Key::Char('\n') => {
-                    if answer == user_input {
+                    if answer == user_input.to_uppercase() {
                         if !answer_given {
                             window.success += 1;
                         }
@@ -63,7 +63,7 @@ pub fn run(options: String) {
                         (question, answer) = new_value(base_question, base_answer, maxi);
                     } else {
                         window.fails += 1;
-                        window.icon = window::Icon::Warning;
+                        window.icon = window::Icon::Cross;
                     }
 
                     user_input.clear();
@@ -79,13 +79,13 @@ pub fn run(options: String) {
                     user_input.clear();
                 }
                 Key::Ctrl('a') | Key::Ctrl('A') => {
-                    window.icon = window::Icon::Answer;
+                    window.icon = window::Icon::Gift;
                     user_input = answer.clone();
                     answer_given = true;
                 }
                 Key::Ctrl('p') | Key::Ctrl('P') => {
                     window.fails += 1;
-                    window.icon = window::Icon::Warning;
+                    window.icon = window::Icon::Cross;
                     (question, answer) = new_value(base_question, base_answer, maxi);
                 }
                 _ => {}
@@ -99,7 +99,7 @@ pub fn run(options: String) {
             );
         }
     } else {
-        println!("Incorrect options, see gym -h");
+        println!("\x1b[91mError: \x1b[0m Wrong options, see gym -h");
     }
 }
 
@@ -130,7 +130,7 @@ fn from_int(base: char, new_value: u32) -> String {
     }
 }
 
-/// Add whitespaces to facititate the reading
+/// Add whitespaces to help reading
 fn format_to_display(base: char, value: &str) -> String {
     let nb_per_group = match base {
         'B' => 4,
@@ -155,6 +155,10 @@ fn update_screen(
     answer: String,
     stdout: &mut RawTerminal<Stdout>,
 ) {
-    window.print(format!("{} -> {}", question, answer));
+    window.print(format!(
+        "{} -> {}",
+        window::format(question, 28, true),
+        window::format(&answer, 23, true),
+    ));
     stdout.flush().unwrap();
 }
