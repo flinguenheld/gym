@@ -13,7 +13,9 @@ pub fn run(options: String) {
     let mut maxi: u32 = options
         .chars()
         .filter(|c| c.is_ascii_digit())
-        .fold(0, |acc, d| acc * 10 + d.to_digit(10).unwrap_or(0));
+        .fold(0_u32, |acc, d| {
+            acc.checked_mul(10).unwrap_or(0) + d.to_digit(10).unwrap_or(0)
+        });
 
     if maxi < 10 {
         maxi = 10;

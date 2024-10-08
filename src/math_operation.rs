@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Ok, Result};
 use rand::Rng;
 use std::collections::VecDeque;
 
@@ -11,7 +11,6 @@ enum Field {
 pub struct Operation {
     pub to_string: String,
     pub result: String,
-
     operators: Vec<char>,
     min: i32,
     max: i32,
@@ -23,9 +22,11 @@ impl Operation {
         if min > max {
             max = min + 5;
         }
-        if nb_terms < 2 {
-            nb_terms = 2;
-        }
+        nb_terms = match nb_terms {
+            _ if nb_terms < 2 => 2,
+            _ if nb_terms > 30 => 30,
+            _ => nb_terms,
+        };
 
         let mut operators = Vec::new(); // In a vec to allow random choice
         if options.contains("A") {
@@ -56,7 +57,7 @@ impl Operation {
     }
 
     /// Update the instance with a new operation
-    pub fn generate(&mut self) {
+    pub fn generate(&mut self) -> Result<()> {
         let nb_numbers = rand::thread_rng().gen_range(2..=self.nb_terms);
 
         let mut previous = 1;
@@ -64,13 +65,15 @@ impl Operation {
             let op = self.operators[rand::thread_rng().gen_range(0..self.operators.len())];
 
             let num = if op == '/' {
-                previous * rand::thread_rng().gen_range(2..=12)
+                // previous * rand::thread_rng().gen_range(2..=12)
+                operation(previous, rand::thread_rng().gen_range(2..=12), '*')?
             } else {
                 rand::thread_rng().gen_range(self.min..=self.max)
             };
 
             if op == '/' {
-                previous *= num;
+                // previous *= num;
+                previous = operation(previous, num, '*')?;
             } else {
                 previous = num;
             }
@@ -83,9 +86,10 @@ impl Operation {
             }
         }
 
-        if let Ok(operations) = convert(self.to_string.as_str()) {
-            self.result = resolve(operations).unwrap();
-        }
+        let operations = convert(self.to_string.as_str())?;
+        self.result = resolve(operations)?;
+
+        Ok(())
     }
 }
 
@@ -154,47 +158,52 @@ fn resolve(mut operations: VecDeque<Field>) -> Result<String> {
             .position(|v| *v == Field::Operator('*') || *v == Field::Operator('/'))
         {
             // Multiplication first --
-            let b = match operations.remove(position + 1).unwrap() {
-                Field::Term(v) => v,
-                _ => return Err(anyhow!("Incorrect operation, expected a term")),
-            };
-            let a = match operations.remove(position - 1).unwrap() {
-                Field::Term(v) => v,
-                _ => return Err(anyhow!("Incorrect operation, expected a term")),
-            };
-            operations[position - 1] = match operations[position - 1] {
-                Field::Operator('/') => Field::Term(a / b),
-                Field::Operator('*') => Field::Term(a * b),
-                _ => return Err(anyhow!("Incorrect operation, expected a term")),
-            };
+            let b = extract_term(&operations.remove(position + 1).unwrap())?;
+            let a = extract_term(&operations.remove(position - 1).unwrap())?;
+
+            if let Some(field) = operations.get_mut(position - 1) {
+                let op = extract_operator(&field)?;
+                *field = Field::Term(operation(a, b, op)?);
+            }
         }
 
         // Rest --
         while operations.len() > 1 {
-            let a = match operations.pop_front().unwrap() {
-                Field::Term(v) => v,
-                _ => return Err(anyhow!("Incorrect operation, expected a term")),
-            };
-            let op = operations.pop_front().unwrap();
-            let b = match operations.pop_front().unwrap() {
-                Field::Term(v) => v,
-                _ => return Err(anyhow!("Incorrect operation, expected a term")),
-            };
+            let a = extract_term(&operations.pop_front().unwrap())?;
+            let op = extract_operator(&operations.pop_front().unwrap())?;
+            let b = extract_term(&operations.pop_front().unwrap())?;
 
-            match op {
-                Field::Operator(o) => operations.push_front(Field::Term(match o {
-                    '+' => a + b,
-                    _ => a - b,
-                })),
-                _ => return Err(anyhow!("Incorrect operation, expected an operator")),
-            };
+            operations.push_front(Field::Term(operation(a, b, op)?));
         }
 
-        match operations.front().unwrap() {
-            Field::Term(v) => Ok(v.to_string()),
-            _ => Err(anyhow!("Resolve failed")),
-        }
+        Ok(extract_term(operations.front().unwrap())?.to_string())
     } else {
         Err(anyhow!("Resolve - Empty"))
+    }
+}
+
+fn extract_term(field: &Field) -> Result<i32> {
+    match field {
+        Field::Term(v) => Ok(*v),
+        _ => return Err(anyhow!("Incorrect operation, expected a term")),
+    }
+}
+fn extract_operator(field: &Field) -> Result<char> {
+    match field {
+        Field::Operator(op) => Ok(*op),
+        _ => return Err(anyhow!("Incorrect operation, expected an operator")),
+    }
+}
+
+fn operation(a: i32, b: i32, operator: char) -> Result<i32> {
+    if let Some(val) = match operator {
+        '/' => a.checked_div(b),
+        '*' => a.checked_mul(b),
+        '-' => a.checked_sub(b),
+        _ => a.checked_add(b),
+    } {
+        Ok(val)
+    } else {
+        Err(anyhow!("Overflow !"))
     }
 }
