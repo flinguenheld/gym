@@ -65,15 +65,13 @@ impl Operation {
             let op = self.operators[rand::thread_rng().gen_range(0..self.operators.len())];
 
             let num = if op == '/' {
-                // previous * rand::thread_rng().gen_range(2..=12)
-                operation(previous, rand::thread_rng().gen_range(2..=12), '*')?
+                calculate(previous, rand::thread_rng().gen_range(2..=12), '*')?
             } else {
                 rand::thread_rng().gen_range(self.min..=self.max)
             };
 
             if op == '/' {
-                // previous *= num;
-                previous = operation(previous, num, '*')?;
+                previous = calculate(previous, num, '*')?;
             } else {
                 previous = num;
             }
@@ -162,8 +160,8 @@ fn resolve(mut operations: VecDeque<Field>) -> Result<String> {
             let a = extract_term(&operations.remove(position - 1).unwrap())?;
 
             if let Some(field) = operations.get_mut(position - 1) {
-                let op = extract_operator(&field)?;
-                *field = Field::Term(operation(a, b, op)?);
+                let op = extract_operator(field)?;
+                *field = Field::Term(calculate(a, b, op)?);
             }
         }
 
@@ -173,7 +171,7 @@ fn resolve(mut operations: VecDeque<Field>) -> Result<String> {
             let op = extract_operator(&operations.pop_front().unwrap())?;
             let b = extract_term(&operations.pop_front().unwrap())?;
 
-            operations.push_front(Field::Term(operation(a, b, op)?));
+            operations.push_front(Field::Term(calculate(a, b, op)?));
         }
 
         Ok(extract_term(operations.front().unwrap())?.to_string())
@@ -185,17 +183,16 @@ fn resolve(mut operations: VecDeque<Field>) -> Result<String> {
 fn extract_term(field: &Field) -> Result<i32> {
     match field {
         Field::Term(v) => Ok(*v),
-        _ => return Err(anyhow!("Incorrect operation, expected a term")),
+        _ => Err(anyhow!("Incorrect operation, expected a term")),
     }
 }
 fn extract_operator(field: &Field) -> Result<char> {
     match field {
         Field::Operator(op) => Ok(*op),
-        _ => return Err(anyhow!("Incorrect operation, expected an operator")),
+        _ => Err(anyhow!("Incorrect operation, expected an operator")),
     }
 }
-
-fn operation(a: i32, b: i32, operator: char) -> Result<i32> {
+fn calculate(a: i32, b: i32, operator: char) -> Result<i32> {
     if let Some(val) = match operator {
         '/' => a.checked_div(b),
         '*' => a.checked_mul(b),

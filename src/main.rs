@@ -10,13 +10,13 @@ use clap::Parser;
 #[command(
     version,
     long_about = "Practice makes perfect!
-Gym allows you to train your maths, keyboard and vocabulary skills in your terminal.
+Gym allows you to train your math, base, keyboard and vocabulary skills in your terminal.
 See more information here: https://github.com/flinguenheld/gym
 
 ex:     gym -m AS4      -> Maths: Additions and Subtrations with 2 to 4 terms
         gym -k LCN15    -> Keyboard: Letters, Caps, Numbers with 15 characters
         gym -b BD256    -> Base: Binary to Deciamal from 1 to 256",
-    after_help = "Ctrl+C or ESC to quit\nCtrl+P to pass the current question\nCtrl+A to get the answer"
+    after_help = "Ctrl+C or ESC to quit\nCtrl+P to pass the current question\nCtrl+A to get the answer\nCtrl+U to clear"
 )]
 struct Args {
     #[arg(
@@ -45,7 +45,7 @@ struct Args {
     #[arg(
         short,
         long,
-        help = "Press Tab to display a hint, requires the file 'vocabulary.txt' in the same folder than gym"
+        help = "Press Tab or Ctrl+H to display a hint, requires the file 'vocabulary.txt' in the same folder than gym"
     )]
     vocabulary: bool,
     #[arg(
@@ -68,6 +68,6 @@ fn main() {
     } else if let Some(mode) = args.base {
         base::run(mode);
     } else {
-        println!("\x1b[91mError: \x1b[0m Wrong options, see gym -h");
+        window::exit_with_error("Wrong options.")
     }
 }

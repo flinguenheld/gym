@@ -28,8 +28,7 @@ pub fn run(options: String, min: i32, max: i32) {
         let mut window = Window::new("Maths".to_string());
         let mut user_input = String::from("");
         let mut answer_given = false;
-        let mut overflow = operation.generate().is_err();
-        // new_operation(&mut operation);
+        new_operation(&mut operation);
 
         update_screen(&operation, &window, user_input.as_str(), &mut stdout);
 
@@ -47,8 +46,7 @@ pub fn run(options: String, min: i32, max: i32) {
                                 window.success += 1;
                             }
                             window.icon = window::Icon::None;
-                            overflow = operation.generate().is_err();
-                            // new_operation(&mut operation);
+                            new_operation(&mut operation);
                         } else if let Ok(user_operation_result) = convert_and_resolve(&user_input) {
                             if user_operation_result == operation.result {
                                 operation.to_string = math_operation::clean_operation(&user_input);
@@ -81,31 +79,25 @@ pub fn run(options: String, min: i32, max: i32) {
                 }
                 Key::Ctrl('p') | Key::Ctrl('P') => {
                     window.fails += 1;
-                    overflow = operation.generate().is_err();
-                    //             operation.generate();
-                    // new_operation(&mut operation);
+                    new_operation(&mut operation);
                     user_input.clear();
                     window.icon = window::Icon::None;
                 }
                 _ => {}
             }
 
-            if overflow {
-                print!("\x1b[91mError: \x1b[0mOverflow!!!, see gym -h");
-                break;
-            }
-
             update_screen(&operation, &window, user_input.as_str(), &mut stdout);
         }
+
+        window.exit();
     } else {
-        println!("\x1b[91mError: \x1b[0mWrong options, see gym -h");
+        window::exit_with_error("Wrong options.");
     }
 }
 
 fn new_operation(operation: &mut math_operation::Operation) {
     if operation.generate().is_err() {
-        println!("\x1b[91mError: \x1b[0mOverflow! Please reduce the options, see gym -h");
-        std::process::exit(0);
+        window::exit_with_error("Overflow! Please reduce the options.")
     }
 }
 

@@ -41,101 +41,102 @@ pub fn run() {
             let mut answer_given = false;
 
             // Get, check & display the first word --
-            if let Some(mut current_word) = get_random_word(&words) {
-                update_screen(&window, current_word, &user_input, &help, &mut stdout);
+            let mut current_word = get_random_word(&words);
+            update_screen(&window, current_word, &user_input, &help, &mut stdout);
 
-                for c in stdin.keys() {
-                    match c.unwrap() {
-                        Key::Esc | Key::Ctrl('c') => {
-                            print!("{}", termion::clear::All);
-                            break;
-                        }
-
-                        // Tab to display help (all synonyms with stars).
-                        Key::Char('\t') | Key::Ctrl('h') | Key::Ctrl('H') => {
-                            help = current_word
-                                .synonyms
-                                .join(" - ")
-                                .chars()
-                                .map(|c| {
-                                    if c != ' '
-                                        && c != '-'
-                                        && rand::thread_rng().gen_bool(1.0 / 1.6)
-                                    {
-                                        '*'
-                                    } else {
-                                        c
-                                    }
-                                })
-                                .collect();
-                        }
-                        Key::Char('\n') => {
-                            if current_word
-                                .synonyms
-                                .contains(&user_input.trim().to_string())
-                            {
-                                if !answer_given {
-                                    window.success += 1;
-                                }
-                                window.icon = window::Icon::None;
-                                current_word = get_random_word(&words).unwrap();
-                            } else {
-                                window.fails += 1;
-                                window.icon = window::Icon::Cross;
-                            }
-
-                            user_input.clear();
-                            help.clear();
-                            answer_given = false;
-                        }
-                        Key::Backspace => {
-                            user_input.pop();
-                        }
-                        Key::Char(c) => {
-                            user_input.push(c);
-                        }
-                        Key::Ctrl('a') | Key::Ctrl('A') => {
-                            window.icon = window::Icon::Gift;
-                            user_input = current_word.synonyms.first().unwrap().clone();
-                            answer_given = true;
-                        }
-                        Key::Ctrl('p') | Key::Ctrl('P') => {
-                            window.fails += 1;
-                            window.icon = window::Icon::None;
-                            current_word = get_random_word(&words).unwrap();
-                            help.clear();
-                        }
-                        _ => {}
+            for c in stdin.keys() {
+                match c.unwrap() {
+                    Key::Esc | Key::Ctrl('c') => {
+                        print!("{}", termion::clear::All);
+                        break;
                     }
 
-                    update_screen(&window, current_word, &user_input, &help, &mut stdout);
+                    // Tab to display help (all synonyms with stars).
+                    Key::Char('\t') | Key::Ctrl('h') | Key::Ctrl('H') => {
+                        help = current_word
+                            .synonyms
+                            .join(" - ")
+                            .chars()
+                            .map(|c| {
+                                if c != ' ' && c != '-' && rand::thread_rng().gen_bool(1.0 / 1.6) {
+                                    '*'
+                                } else {
+                                    c
+                                }
+                            })
+                            .collect();
+                    }
+                    Key::Char('\n') => {
+                        if current_word
+                            .synonyms
+                            .contains(&user_input.trim().to_string())
+                        {
+                            if !answer_given {
+                                window.success += 1;
+                            }
+                            window.icon = window::Icon::None;
+                            current_word = get_random_word(&words);
+                        } else {
+                            window.fails += 1;
+                            window.icon = window::Icon::Cross;
+                        }
+
+                        user_input.clear();
+                        help.clear();
+                        answer_given = false;
+                    }
+                    Key::Backspace => {
+                        user_input.pop();
+                    }
+                    Key::Char(c) => {
+                        user_input.push(c);
+                    }
+                    Key::Ctrl('a') | Key::Ctrl('A') => {
+                        window.icon = window::Icon::Gift;
+                        user_input = current_word.synonyms.first().unwrap().clone();
+                        answer_given = true;
+                    }
+                    Key::Ctrl('p') | Key::Ctrl('P') => {
+                        window.fails += 1;
+                        window.icon = window::Icon::None;
+                        current_word = get_random_word(&words);
+                        help.clear();
+                    }
+                    _ => {}
                 }
-            } else {
-                println!("\r");
-                println!("   The file 'vocabulary.txt' is empty or corrupted, please recreate it with this structure:\r");
-                println!("       word=first_synonym,second_synonym,...\r");
-                println!("       word=first_synonym,second_synonym,...\r");
-                println!("       ...\r");
-                println!("\r");
+
+                update_screen(&window, current_word, &user_input, &help, &mut stdout);
             }
+
+            window.exit();
         } else {
-            println!("\r");
-            println!("   Error file, please create a file 'vocabulary.txt' in the same folder with this structure:\r");
-            println!("       word=first_synonym,second_synonym,...\r");
-            println!("       word=first_synonym,second_synonym,...\r");
-            println!("       ...\r");
-            println!("\r");
+            window::exit_with_error(
+                "No file.\r
+       Please create a file 'vocabulary.txt' in the same folder with this structure:\r\n
+              word=first_synonym,second_synonym,...\r
+              word=first_synonym,second_synonym,...\r
+              ...\r\n\n",
+            );
         }
     } else {
-        println!("\r");
-        println!("   Gym's folder is unreachable");
-        println!("\r");
+        window::exit_with_error("Gym's folder is unreachable.");
     }
 }
 
 // --
-fn get_random_word(words: &[Word]) -> Option<&Word> {
-    words.get(rand::thread_rng().gen_range(0..words.len()))
+fn get_random_word(words: &[Word]) -> &Word {
+    if words.is_empty() {
+        window::exit_with_error(
+            "The file 'vocabulary.txt' is empty or corrupted.\r
+       Please recreate it with this structure:\r\n
+              word=first_synonym,second_synonym,...\r
+              word=first_synonym,second_synonym,...\r
+              ...\r\n\n",
+        );
+    }
+    words
+        .get(rand::thread_rng().gen_range(0..words.len()))
+        .unwrap()
 }
 
 fn update_screen(

@@ -9,7 +9,9 @@ pub fn run(options: &str) {
     let mut nb: u32 = options
         .chars()
         .filter(|c| c.is_ascii_digit())
-        .fold(0, |acc, d| acc * 10 + d.to_digit(10).unwrap_or(0));
+        .fold(0_u32, |acc, d| {
+            acc.checked_mul(10).unwrap_or(0) + d.to_digit(10).unwrap_or(0)
+        });
 
     if nb == 0 {
         nb = 3;
@@ -79,8 +81,10 @@ pub fn run(options: &str) {
 
             update_screen(&window, &current_value, &user_input, &mut stdout);
         }
+
+        window.exit();
     } else {
-        println!("\x1b[91mError: \x1b[0m Wrong options, see gym -h");
+        window::exit_with_error("Wrong options.");
     }
 }
 

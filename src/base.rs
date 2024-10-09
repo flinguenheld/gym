@@ -1,5 +1,4 @@
 use crate::window::{self, Window};
-
 use rand::Rng;
 use std::collections::VecDeque;
 use std::io::{stdin, stdout, Stdout, Write};
@@ -100,17 +99,19 @@ pub fn run(options: String) {
                 &mut stdout,
             );
         }
+
+        window.exit();
     } else {
-        println!("\x1b[91mError: \x1b[0m Wrong options, see gym -h");
+        window::exit_with_error("Wrong options.");
     }
 }
 
 /// Give the full base text
 fn option_to_string(base: char) -> &'static str {
     match base {
-        'B' => "binary",
-        'D' => "decimal",
-        _ => "hexadecimal",
+        'B' => "Binary",
+        'D' => "Decimal",
+        _ => "Hexadecimal",
     }
 }
 

@@ -1,3 +1,9 @@
+const BLUE: &str = "\x1b[34m";
+const BOLD_ON: &str = "\x1b[1m";
+const BOLD_OFF: &str = "\x1b[21m";
+const OFF: &str = "\x1b[0m";
+const RED: &str = "\x1b[31m";
+
 pub enum Icon {
     Cross,
     Loop,
@@ -58,6 +64,39 @@ impl Window {
             print!("{}{}", termion::cursor::Goto(18, i as u16 + 6), line);
         }
     }
+
+    /// Clean the terminal, print a summary an exit.
+    pub fn exit(&self) {
+        print!(
+            "{}{}{}{}{}:{}{} {} success {} fails ",
+            termion::clear::All,
+            termion::cursor::Goto(1, 1),
+            BLUE,
+            BOLD_ON,
+            self.title,
+            BOLD_OFF,
+            OFF,
+            self.success,
+            self.fails
+        );
+        std::process::exit(0);
+    }
+}
+
+/// Clean the terminal, print an error an exit.
+pub fn exit_with_error(text: &str) {
+    print!(
+        "{}{}{}{}Error:{}{} {}{}See gym -h ",
+        termion::clear::All,
+        termion::cursor::Goto(1, 1),
+        RED,
+        BOLD_ON,
+        BOLD_OFF,
+        OFF,
+        text,
+        termion::cursor::Goto(8, text.lines().count() as u16 + 1)
+    );
+    std::process::exit(1);
 }
 
 /// Cut txt in n lines of chars_per_line length.
