@@ -1,7 +1,7 @@
 ## gym 💪
 
 Maintain your memory level with gym !  
-This small game allows you to practice mental arithmetic in your terminal. 🧠
+This simple game allows you to practice mental arithmetic in your terminal. 🧠
 
 ```
  CTL+C or ESC to quit.   
@@ -21,12 +21,19 @@ This small game allows you to practice mental arithmetic in your terminal. 🧠
 ### Keyboard
 Don't tell me you've changed your layout again 😮‍💨  
 
-`gym --keyboard <KEYBOARD>  (L)etters (C)aps (N)umbers (S)ymbols (1..) nb characters [default: 3]`
+`gym --keyboard <KEYBOARD> (L)etters (C)aps (N)umbers (S)ymbols (1..) nb characters [default: 3]`
 
 <div align="center">
   <img src="./images/keyboard.gif">
 </div>
 
+### Base
+
+`gym --base <BASE> (B)inary (D)ecimal (H)exadecimal (10..) maximal value`
+
+<div align="center">
+  <img src="./images/base.gif">
+</div>
 
 ### Vocabulary
 Unbelievable! You can also practice you vocabulary in your terminal 🤯  
