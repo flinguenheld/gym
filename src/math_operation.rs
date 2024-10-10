@@ -4,7 +4,7 @@ use std::collections::VecDeque;
 
 #[derive(Debug, PartialEq, Eq)]
 enum Field {
-    Term(i32),
+    Term(i64),
     Operator(char),
 }
 
@@ -12,31 +12,23 @@ pub struct Operation {
     pub to_string: String,
     pub result: String,
     operators: Vec<char>,
-    min: i32,
-    max: i32,
+    min: i64,
+    max: i64,
     nb_terms: u32,
+    cons_div: u8,
 }
 
 impl Operation {
-    pub fn new(options: String, mut nb_terms: u32, min: i32, mut max: i32) -> Option<Self> {
-        if min > max {
-            max = min + 5;
-        }
-        nb_terms = match nb_terms {
-            _ if nb_terms < 2 => 2,
-            _ if nb_terms > 30 => 30,
-            _ => nb_terms,
-        };
-
+    pub fn new(options: String, nb_terms: u32, min: i64, max: i64, cons_div: bool) -> Option<Self> {
         let mut operators = Vec::new(); // In a vec to allow random choice
+        if options.contains("D") {
+            operators.push('/');
+        }
         if options.contains("A") {
             operators.push('+');
         }
         if options.contains("S") {
             operators.push('-');
-        }
-        if options.contains("D") {
-            operators.push('/');
         }
         if options.contains("M") {
             operators.push('*');
@@ -50,8 +42,16 @@ impl Operation {
                 result: "0".to_string(),
                 operators,
                 min,
-                max,
-                nb_terms,
+                max: if min > max { min + 5 } else { max },
+                nb_terms: match nb_terms {
+                    _ if nb_terms < 2 => 2,
+                    _ if nb_terms > 30 => 30,
+                    _ => nb_terms,
+                },
+                cons_div: match cons_div {
+                    false => 1,
+                    true => 2,
+                },
             })
         }
     }
@@ -60,9 +60,19 @@ impl Operation {
     pub fn generate(&mut self) -> Result<()> {
         let nb_numbers = rand::thread_rng().gen_range(2..=self.nb_terms);
 
-        let mut previous = 1;
+        let (mut previous, mut div_count) = (1, 0);
         for i in 0..nb_numbers {
-            let op = self.operators[rand::thread_rng().gen_range(0..self.operators.len())];
+            let op = if div_count == self.cons_div {
+                div_count = 0;
+                previous = 1;
+                if self.operators.len() > 1 {
+                    self.operators[rand::thread_rng().gen_range(1..self.operators.len())]
+                } else {
+                    ['+', '-', '*'][rand::thread_rng().gen_range(0..3)]
+                }
+            } else {
+                self.operators[rand::thread_rng().gen_range(0..self.operators.len())]
+            };
 
             let num = if op == '/' {
                 calculate(previous, rand::thread_rng().gen_range(2..=12), '*')?
@@ -70,7 +80,9 @@ impl Operation {
                 rand::thread_rng().gen_range(self.min..=self.max)
             };
 
+            // Prevent more than 'cons_div' consecutives divisions
             if op == '/' {
+                div_count += 1;
                 previous = calculate(previous, num, '*')?;
             } else {
                 previous = num;
@@ -134,7 +146,7 @@ fn convert(txt: &str) -> Result<VecDeque<Field>> {
                 current.push(*c);
             }
 
-            let num = current.parse::<i32>()?;
+            let num = current.parse::<i64>()?;
             operations.push_back(Field::Term(num));
             current.clear();
 
@@ -180,7 +192,7 @@ fn resolve(mut operations: VecDeque<Field>) -> Result<String> {
     }
 }
 
-fn extract_term(field: &Field) -> Result<i32> {
+fn extract_term(field: &Field) -> Result<i64> {
     match field {
         Field::Term(v) => Ok(*v),
         _ => Err(anyhow!("Incorrect operation, expected a term")),
@@ -192,7 +204,7 @@ fn extract_operator(field: &Field) -> Result<char> {
         _ => Err(anyhow!("Incorrect operation, expected an operator")),
     }
 }
-fn calculate(a: i32, b: i32, operator: char) -> Result<i32> {
+fn calculate(a: i64, b: i64, operator: char) -> Result<i64> {
     if let Some(val) = match operator {
         '/' => a.checked_div(b),
         '*' => a.checked_mul(b),

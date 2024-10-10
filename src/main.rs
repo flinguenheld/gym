@@ -32,14 +32,16 @@ struct Args {
         allow_negative_numbers = true,
         help = "min value for maths (can be negative)"
     )]
-    min: i32,
+    min: i64,
     #[arg(
         long,
         default_value_t = 9,
         allow_negative_numbers = true,
         help = "max value for maths (can be negative)"
     )]
-    max: i32,
+    max: i64,
+    #[arg(long = "cons-div", help = "Allow up to 2 consecutive divisions")]
+    consecutive_div: bool,
     #[arg(short, long, help = "(B)inary (D)ecimal (H)exadecimal (10..) maxi")]
     base: Option<String>,
     #[arg(
@@ -60,7 +62,7 @@ fn main() {
     let args = Args::parse();
 
     if let Some(m) = args.maths {
-        math::run(m.to_uppercase(), args.min, args.max);
+        math::run(m.to_uppercase(), args.min, args.max, args.consecutive_div);
     } else if let Some(k) = args.keyboard {
         keyboard::run(&k.to_uppercase());
     } else if args.vocabulary {

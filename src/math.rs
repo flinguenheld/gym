@@ -6,7 +6,7 @@ use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::{IntoRawMode, RawTerminal};
 
-pub fn run(options: String, min: i32, max: i32) {
+pub fn run(options: String, min: i64, max: i64, max_cons_div: bool) {
     if let Some(mut operation) = math_operation::Operation::new(
         options
             .chars()
@@ -20,6 +20,7 @@ pub fn run(options: String, min: i32, max: i32) {
             }),
         min,
         max,
+        max_cons_div,
     ) {
         // Raw mode mandatory to read key events --
         let stdin = stdin();
